@@ -20,7 +20,7 @@ import dic
 learning_rate = 5.0e-2
 training_steps = 50000
 display_step = 100
-
+batch_size = 1000
 # Network Parameters
 num_input = 100 
 timesteps = 10 # timesteps
@@ -51,8 +51,8 @@ val_size = D.shape[1]-train_size
 
 series_real = np.real(D.T[permutation])
 series_imag = np.imag(D.T[permutation])
-series_mag = np.abs(dictionary.D.T[permutation])
-series_phase = np.angle(dictionary.D.T[permutation])
+series_mag = np.abs(D.T[permutation])
+series_phase = np.angle(D.T[permutation])
 series = np.concatenate([series_mag.T, series_phase.T])
 series = series.T
 
@@ -102,9 +102,9 @@ with tf.Session() as sess:
     val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss/', sess.graph)
     
     for step in range(1, training_steps+1):
-        batch_x = series_mag[0:train_size]
-        batch_x = batch_x.reshape((train_size, timesteps, num_input), order='F')
-        batch_y = relaxation_times[0:train_size]
+        batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
+        batch_x = batch_x.reshape((batch_size, timesteps, num_input), order='F')
+        batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
         
         # Training, validation and loss computation
         training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
