@@ -42,7 +42,7 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_test', 1000, 10)
-D = dictionary.D / np.linalg.norm(dictionary.D, axis=0)
+D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]] / np.linalg.norm(dictionary.D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 series_real = np.real(D.T[permutation])
 series_imag = np.imag(D.T[permutation])
@@ -50,7 +50,8 @@ series_mag = np.abs(dictionary.D.T[permutation])
 series_phase = np.angle(dictionary.D.T[permutation])
 series = np.concatenate([series_mag.T, series_phase.T])
 series = series.T
-relaxation_times = dictionary.lut[0:2].T[permutation]
+
+relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
 

@@ -42,7 +42,7 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_train', 1000, 10)
-D = dictionary.D / np.linalg.norm(dictionary.D, axis=0)
+D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]] / np.linalg.norm(dictionary.D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
@@ -58,7 +58,7 @@ series = series.T
 #test_set = series_mag[train_size+val_size:].reshape((test_size, timesteps, num_input), order='F')
 val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_input), order='F')
 
-relaxation_times = dictionary.lut[0:2].T[permutation]
+relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
 
