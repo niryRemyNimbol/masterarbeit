@@ -41,7 +41,7 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_train', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_train', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]] / np.linalg.norm(dictionary.D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 
@@ -89,7 +89,7 @@ val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 saver = tf.train.Saver()
 
 # Restoration directory
-ckpt_dir = '../rnn_model/'
+ckpt_dir = 'rnn_model/'
 
 # Start training
 with tf.Session() as sess:
@@ -97,8 +97,8 @@ with tf.Session() as sess:
     # Run the initializer
     sess.run(init)
         
-    train_loss_writer = tf.summary.FileWriter('../tensorboard/training_loss/', sess.graph)
-    val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss/', sess.graph)
+    train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
+    val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss/', sess.graph)
     
     for step in range(1, training_steps+1):
         batch_x = series_mag[0:train_size]
