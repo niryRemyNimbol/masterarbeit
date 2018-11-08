@@ -20,9 +20,7 @@ import dic
 # Training Parameters
 learning_rate = 8.0e-3
 training_steps = 100000
-train_size = 600
-test_size = 40
-display_step = 100
+
 
 # Network Parameters
 num_input = 100 
@@ -43,9 +41,9 @@ Y = tf.placeholder("float", [None, num_output])
 #}
 
 # Time series and corresponding T1 and T2dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_test', 1000, 10)
 D = dictionary.D / np.linalg.norm(dictionary.D, axis=0)
-permutation = np.random.permutation(640)
+permutation = np.random.permutation(D.shape[1])
 series_real = np.real(D.T[permutation])
 series_imag = np.imag(D.T[permutation])
 series_mag = np.abs(dictionary.D.T[permutation])
@@ -96,7 +94,7 @@ out = times_max * logits
 saver = tf.train.Saver()
 
 # Restoration directory
-ckpt_dir = 'rnn_model/'
+ckpt_dir = '../rnn_model/'
 
 # Start training
 with tf.Session() as sess:
@@ -130,8 +128,8 @@ with tf.Session() as sess:
 
 #     Calculate MSE for test time series
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
-                                                         feed_dict={X: series_mag[train_size:].reshape((test_size, timesteps, num_input), order='F'),
-                                                                    Y: relaxation_times[train_size:]})
+                                                         feed_dict={X: series_mag.reshape((D.shape[1], timesteps, num_input), order='F'),
+                                                                    Y: relaxation_times})
     error_t1 = np.sqrt(squared_error_t1)
     error_t2 = np.sqrt(squared_error_t2)
 
