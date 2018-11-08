@@ -42,7 +42,8 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_train', 1000, 10)
-D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]] / np.linalg.norm(dictionary.D, axis=0)
+D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
+D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
