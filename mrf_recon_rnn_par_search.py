@@ -119,15 +119,15 @@ for nh in num_hidden:
                     val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: relaxation_times[train_size:train_size+val_size]})
                     val_loss_writer.add_summary(val_summary, step)
             
-                if step % display_step == 0 or step == 1:
-                    print("Step " + str(step) + ", Minibatch Loss= " + "{:.10f}".format(val_loss))
-            
-                if step == training_steps:
+                    if step % display_step == 1:
+                        print("Step " + str(step) + ", Minibatch Loss= " + "{:.10f}".format(val_loss))
+                
+                    if step == training_steps:
             # Save trained network
-                    ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, step)
-                    saver.save(sess, ckpt_file)
-        
-                print("Optimization Finished!")
+                        ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, step)
+                        saver.save(sess, ckpt_file)
+            
+                    print("Optimization Finished!")
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
