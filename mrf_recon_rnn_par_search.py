@@ -127,7 +127,7 @@ for nh in num_hidden:
                         ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, step)
                         saver.save(sess, ckpt_file)
             
-                    print("Optimization Finished!")
+            print("Optimization Finished!")
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
