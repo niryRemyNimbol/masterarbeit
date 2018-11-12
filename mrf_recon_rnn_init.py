@@ -51,7 +51,7 @@ val_size = D.shape[1]-train_size
 
 series_real = np.real(D.T[permutation])
 series_imag = np.imag(D.T[permutation])
-series_mag = np.abs(D.T[permutation])
+series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
 series_phase = np.angle(D.T[permutation])
 series = np.concatenate([series_mag.T, series_phase.T])
 series = series.T
@@ -60,7 +60,7 @@ series = series.T
 val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_input), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
-times_max = np.max(relaxation_times, axis=0)
+times_max = np.array([4., 0.5], dtype=float)
 relaxation_times /= times_max
 
 from rnn_functions import RNN
