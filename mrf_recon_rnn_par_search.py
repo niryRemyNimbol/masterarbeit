@@ -18,13 +18,13 @@ import dic
 
 # Training Parameters
 training_steps = 50000
-learning_rate = [1., 0.5, 0.1, 0.05, 0.01, 0.005, 0.001]
+learning_rate = [0.1, 0.05, 0.01, 0.005, 0.001]
 display_step = 500
 batch_size = 1000
 # Network Parameters
 num_input = 100 
 timesteps = 10 # timesteps
-num_hidden = [10, 20, 50, 80, 100]
+num_hidden = [10, 20, 40, 50]
 num_output = 2 # number of output parameters
 
 # tf Graph input
@@ -41,7 +41,7 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_train', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -49,12 +49,14 @@ permutation = np.random.permutation(D.shape[1])
 train_size = int(np.floor(D.shape[1]*0.8))
 val_size = D.shape[1]-train_size
 
-series_real = np.real(D.T[permutation])
-series_imag = np.imag(D.T[permutation])
-series_mag = np.abs(D.T[permutation])
-series_phase = np.angle(D.T[permutation])
-series = np.concatenate([series_mag.T, series_phase.T])
-series = series.T
+#series_real = np.real(D.T[permutation])
+#series_imag = np.imag(D.T[permutation])
+#series_mag = np.abs(D.T[permutation])
+#Ten percent gaussian noise data
+series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+#series_phase = np.angle(D.T[permutation])
+#series = np.concatenate([series_mag.T, series_phase.T])
+#series = series.T
 
 #test_set = series_mag[train_size+val_size:].reshape((test_size, timesteps, num_input), order='F')
 val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_input), order='F')
