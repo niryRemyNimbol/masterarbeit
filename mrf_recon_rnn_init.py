@@ -17,14 +17,14 @@ import dic
 
 
 # Training Parameters
-learning_rate = 5.0e-2
+learning_rate = 0.5
 training_steps = 50000
-display_step = 100
+display_step = 500
 batch_size = 1000
 # Network Parameters
 num_input = 100 
 timesteps = 10 # timesteps
-num_hidden = 40 # hidden layer num of features
+num_hidden = 10 # hidden layer num of features
 num_output = 2 # number of output parameters
 
 # tf Graph input
@@ -108,22 +108,22 @@ with tf.Session() as sess:
         
         # Training, validation and loss computation
         training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
-#        train_loss_writer.add_summary(summary, step)
+        train_loss_writer.add_summary(summary, step)
         
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-#        val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: relaxation_times[train_size:train_size+val_size]})
-#        val_loss_writer.add_summary(val_summary, step)
+        val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: relaxation_times[train_size:train_size+val_size]})
+        val_loss_writer.add_summary(val_summary, step)
         
         if step % display_step == 0 or step == 1:
             print("Step " + str(step) + ", Minibatch Loss= " + \
-                  "{:.10f}".format(loss))
+                  "{:.10f}".format(val_loss))
         
-#        if step == training_steps:
+        if step == training_steps:
 #            # Save trained network
-#            ckpt_file = ckpt_dir + 'model_2_checkpoint{}.ckpt'.format(step)
-#            saver.save(sess, ckpt_file)
+            ckpt_file = ckpt_dir + 'model_lr0.5_nh10_checkpoint{}.ckpt'.format(step)
+            saver.save(sess, ckpt_file)
     
     print("Optimization Finished!")
 
