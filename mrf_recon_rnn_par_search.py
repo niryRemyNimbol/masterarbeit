@@ -17,7 +17,7 @@ import dic
 
 
 # Training Parameters
-training_steps = 50000
+training_steps = 100000
 learning_rate = [0.1, 0.05, 0.01, 0.005, 0.001]
 display_step = 100
 batch_size = 1000
