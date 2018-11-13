@@ -19,8 +19,8 @@ import dic
 # Training Parameters
 training_steps = 50000
 learning_rate = [0.1, 0.05, 0.01, 0.005, 0.001]
-display_step = 500
-batch_size = 10000
+display_step = 100
+batch_size = 1000
 # Network Parameters
 num_input = 100 
 timesteps = 10 # timesteps
