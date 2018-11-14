@@ -118,7 +118,10 @@ for nh in num_hidden:
 #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
 #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
 #                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-                    for batch_x, batch_y in train_set, train_times:
+                    for k in range(len(train_set)):
+                        batch_x = train_set[k]
+                        batch_y = train_times[k]
+                        
                         training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})        
         # Training, validation and loss computation
 #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
