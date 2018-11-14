@@ -49,7 +49,7 @@ permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
 val_size = D.shape[1]-train_size
-batches_per_epoch  = np.floor(train_size / batch_size)
+batches_per_epoch  = int(np.floor(train_size / batch_size))
 
 #series_real = np.real(D.T[permutation])
 #series_imag = np.imag(D.T[permutation])
