@@ -69,7 +69,7 @@ times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
 
 train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-train_times.append(series_mag[batch_size*batches_per_epoch:train_size])
+train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 val_times = relaxation_times[train_size:train_size+val_size]
 
 from rnn_functions import RNN
