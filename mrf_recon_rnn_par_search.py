@@ -17,14 +17,15 @@ import dic
 
 
 # Training Parameters
-training_steps = 100000
-learning_rate = [0.1, 0.05, 0.01, 0.005, 0.001]
+epochs = 1000
+learning_rate = [0.5, 5e-4]
 display_step = 100
 batch_size = 1000
+
 # Network Parameters
 num_input = 100 
 timesteps = 10 # timesteps
-num_hidden = [10, 20, 40, 50]
+num_hidden = [10, 50]
 num_output = 2 # number of output parameters
 
 # tf Graph input
@@ -48,6 +49,7 @@ permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
 val_size = D.shape[1]-train_size
+batches_per_epoch  = np.floor(train_size / batch_size)
 
 #series_real = np.real(D.T[permutation])
 #series_imag = np.imag(D.T[permutation])
@@ -58,12 +60,17 @@ series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.nor
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-#test_set = series_mag[train_size+val_size:].reshape((test_size, timesteps, num_input), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_input), order='F') for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_input), order='F'))
 val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_input), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
+
+train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+train_times.append(series_mag[batch_size*batches_per_epoch:])
+val_times = relaxation_times[train_size:train_size+val_size]
 
 from rnn_functions import RNN
 
@@ -87,7 +94,7 @@ for nh in num_hidden:
             init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
-            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
+#            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
             val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 #merged = tf.summary.merge_all()
 
@@ -103,28 +110,30 @@ for nh in num_hidden:
     # Run the initializer
                 sess.run(init)
         
-                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
+#                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
                 val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
-    
-                for step in range(1, training_steps+1):
-                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
-                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-        
+                
+                total_loss = 0
+                for epoch in range(1, epochs+1):
+#                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
+#                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
+#                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
+                    for batch_x, batch_y in train_set, train_times:
+                        training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})        
         # Training, validation and loss computation
-                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
-                    train_loss_writer.add_summary(summary, step)
+#                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
+#                    train_loss_writer.add_summary(summary, step)
         
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: relaxation_times[train_size:train_size+val_size]})
-                    val_loss_writer.add_summary(val_summary, step)
+                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
+                    val_loss_writer.add_summary(val_summary, epoch)
             
-                    if step % display_step == 1:
-                        print("Step " + str(step) + ", Minibatch Loss= " + "{:.10f}".format(val_loss))
+                    if epoch % display_step == 1:
+                        print("Epoch " + str(step) + ", Validation Loss= " + "{:.10f}".format(val_loss))
                 
-                    if step == training_steps:
+                    if step == epochs:
             # Save trained network
                         ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, step)
                         saver.save(sess, ckpt_file)
