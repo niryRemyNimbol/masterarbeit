@@ -20,7 +20,7 @@ import dic
 epochs = 1500
 learning_rate = 0.5
 display_step = 100
-batch_size = 10000
+batch_size = 1000
 
 # Network Parameters
 num_input = 64 
