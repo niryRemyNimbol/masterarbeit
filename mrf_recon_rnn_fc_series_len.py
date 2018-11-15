@@ -140,7 +140,7 @@ for timestep in range(1, timesteps+1):
         
             if epoch == epochs:
     # Save trained network
-                ckpt_file = ckpt_dir + 'model_fc_checkpoint{}.ckpt'.format(epoch)
+                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
                 saver.save(sess, ckpt_file)
     
     print("Optimization Finished!")
