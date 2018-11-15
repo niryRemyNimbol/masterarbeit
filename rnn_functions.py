@@ -32,10 +32,12 @@ def RNN_with_fc(x, num_input, timesteps, num_hidden, num_output):
     # Prepare data shape to match `rnn` function requirements
     # Current data input shape: (batch_size, timesteps, n_input)
     # Required shape: 'timesteps' tensors list of shape (batch_size, n_input)
-    x = tf.layers.dense(x, num_input*timesteps)
 
     # Unstack to get a list of 'timesteps' tensors of shape (batch_size, n_input)
     x = tf.unstack(x, timesteps, 1)
+    
+    # Applying fully connected layer
+    x = [tf.layers.dense(x_in, num_input, kernel_regularizer=tf.norm, name='fc{}'.format(x.index(x_in)), reuse=tf.AUTO_REUSE) for x_in in x]
 
     # Define a lstm cell with tensorflow
     lstm_cell = tf.nn.rnn_cell.LSTMCell(num_hidden, forget_bias=1.0, activation=tf.tanh, 

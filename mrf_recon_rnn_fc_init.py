@@ -28,6 +28,9 @@ timesteps = 10 # timesteps
 num_hidden = 10
 num_output = 2 # number of output parameters
 
+# Fully Connected Layer Parameters
+num_in_fc = 100
+
 # tf Graph input
 X = tf.placeholder("float", [None, timesteps, num_input])
 Y = tf.placeholder("float", [None, num_output])
@@ -60,9 +63,9 @@ series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.nor
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_input), order='F') for step in range(batches_per_epoch)]
-train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_input), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_input), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
+val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
