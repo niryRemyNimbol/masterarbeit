@@ -17,10 +17,10 @@ import dic
 
 
 # Training Parameters
-epochs = 1000
+epochs = 1500
 learning_rate = 0.5
 display_step = 100
-batch_size = 1500
+batch_size = 10000
 
 # Network Parameters
 num_input = 64 
@@ -138,7 +138,7 @@ with tf.Session() as sess:
     
         if epoch == epochs:
 # Save trained network
-            ckpt_file = ckpt_dir + 'model_checkpoint{}.ckpt'.format(epoch)
+            ckpt_file = ckpt_dir + 'model_fc_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
 
 print("Optimization Finished!")
