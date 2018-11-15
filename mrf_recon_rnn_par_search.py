@@ -134,11 +134,11 @@ for nh in num_hidden:
                     val_loss_writer.add_summary(val_summary, epoch)
             
                     if epoch % display_step == 1:
-                        print("Epoch " + str(step) + ", Validation Loss= " + "{:.10f}".format(val_loss))
+                        print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
                 
-                    if step == epochs:
+                    if epoch == epochs:
             # Save trained network
-                        ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, step)
+                        ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, epoch)
                         saver.save(sess, ckpt_file)
             
             print("Optimization Finished!")
