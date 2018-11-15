@@ -32,7 +32,7 @@ num_output = 2 # number of output parameters
 num_in_fc = 100
 
 # tf Graph input
-X = tf.placeholder("float", [None, timesteps, num_input])
+X = tf.placeholder("float", [None, timesteps, num_in_fc])
 Y = tf.placeholder("float", [None, num_output])
 
 ## Define weights
