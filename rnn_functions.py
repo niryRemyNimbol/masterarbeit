@@ -48,4 +48,5 @@ def RNN_with_fc(x, num_input, timesteps, num_hidden, num_output):
 
     # Linear activation, using rnn inner loop last output
     return tf.layers.dense(outputs[-1], num_output, activation=tf.sigmoid, kernel_regularizer=tf.norm, name='out', reuse=tf.AUTO_REUSE)
+#    return tf.layers.dense(outputs[-1], num_output, activation=tf.nn.relu, kernel_regularizer=tf.norm, name='out', reuse=tf.AUTO_REUSE)
 #sigmoid(tf.matmul(outputs[-1], weights['out']) + biases['out'])

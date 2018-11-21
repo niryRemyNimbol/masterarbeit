@@ -17,22 +17,27 @@ import dic
 
 
 # Training Parameters
-epochs = 1000
-learning_rate = [0.5, 5e-4]
-display_step = 100
+epochs = 500
+learning_rate = [4e-1, 2e-1]
+display_step = 20
 batch_size = 1000
 
 # Network Parameters
-num_input = 100 
+num_input = 64 
 timesteps = 10 # timesteps
-num_hidden = [10, 50]
+num_hidden = [10, 30]
 num_output = 2 # number of output parameters
 
+# Fully Connected Layer Parameters
+num_in_fc = 100
+
+
 # tf Graph input
-X = tf.placeholder("float", [None, timesteps, num_input])
+X = tf.placeholder("float", [None, timesteps, num_in_fc])
 Y = tf.placeholder("float", [None, num_output])
 
-## Define weights
+## Define weights100% /
+
 #weights = {
 #    'out': tf.Variable(tf.random_normal([num_hidden, num_output])/np.sqrt(num_hidden))
 #}
@@ -42,7 +47,7 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -60,9 +65,9 @@ series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.nor
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_input), order='F') for step in range(batches_per_epoch)]
-train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_input), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_input), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
+val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
@@ -72,16 +77,16 @@ train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in
 train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 val_times = relaxation_times[train_size:train_size+val_size]
 
-from rnn_functions import RNN
+from rnn_functions import RNN_with_fc
 
 for nh in num_hidden:
     for lr in learning_rate:
         with tf.variable_scope("nh{}".format(nh)):
-            logits = RNN(X, timesteps, nh, num_output)
+            logits = RNN_with_fc(X, num_input, timesteps, nh, num_output)
 
 # Define loss and optimizer
             loss_op = tf.losses.mean_squared_error(Y, logits)
-            #loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
+#            loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
             optimizer = tf.train.GradientDescentOptimizer(learning_rate=lr)
             train_op = optimizer.minimize(loss_op)
 
@@ -89,20 +94,23 @@ for nh in num_hidden:
             mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
             mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
             out = times_max * logits
+#            mse_t1 = tf.losses.mean_squared_error(labels=Y[:, 0], predictions=logits[:, 0])
+#            mse_t2 = tf.losses.mean_squared_error(labels=Y[:, 1], predictions=logits[:, 1])
+#            out = logits
 
 # Initialize the variables (i.e. assign their default value)
             init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-            val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
+#            val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 #merged = tf.summary.merge_all()
 
 # Saver
             saver = tf.train.Saver()
 
 # Restoration directory
-            ckpt_dir = 'rnn_model/'
+            ckpt_dir = '../rnn_model_par_search/'
 
 # Start training
             with tf.Session() as sess:
@@ -111,7 +119,7 @@ for nh in num_hidden:
                 sess.run(init)
         
 #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
-                val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
+#                val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
                 
                 total_loss = 0
                 for epoch in range(1, epochs+1):
@@ -130,16 +138,17 @@ for nh in num_hidden:
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
-                    val_loss_writer.add_summary(val_summary, epoch)
+                    val_loss = sess.run(loss_op, feed_dict={X:val_set, Y: val_times})
+#                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
+#                    val_loss_writer.add_summary(val_summary, epoch)
             
                     if epoch % display_step == 1:
                         print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
                 
-                    if epoch == epochs:
-            # Save trained network
-                        ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, epoch)
-                        saver.save(sess, ckpt_file)
+#                    if epoch == epochs:
+#            # Save trained network
+#                        ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, epoch)
+#                        saver.save(sess, ckpt_file)
             
             print("Optimization Finished!")
 
