@@ -37,7 +37,8 @@ def RNN_with_fc(x, num_input, timesteps, num_hidden, num_output):
     x = tf.unstack(x, timesteps, 1)
     
     # Applying fully connected layer
-    x = [tf.layers.dense(x_in, num_input, kernel_regularizer=tf.norm, name='fc{}'.format(x.index(x_in)), reuse=tf.AUTO_REUSE) for x_in in x]
+    x = [tf.layers.dense(x_in, num_input, activation=tf.tanh, kernel_regularizer=tf.norm, name='fc{}'.format(x.index(x_in)), reuse=tf.AUTO_REUSE) for x_in in x]
+#    seq_length = tf.constant([x_in.shape[1].value for x_in in x])
 
     # Define a lstm cell with tensorflow
     lstm_cell = tf.nn.rnn_cell.LSTMCell(num_hidden, forget_bias=1.0, activation=tf.tanh, 
@@ -45,6 +46,7 @@ def RNN_with_fc(x, num_input, timesteps, num_hidden, num_output):
 
     # Get lstm cell output
     outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
+#    outputs, states = tf.nn.static_rnn(lstm_cell, x, sequence_length=seq_length, dtype=tf.float32)
 
     # Linear activation, using rnn inner loop last output
     return tf.layers.dense(outputs[-1], num_output, activation=tf.sigmoid, kernel_regularizer=tf.norm, name='out', reuse=tf.AUTO_REUSE)

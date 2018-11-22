@@ -17,12 +17,10 @@ import dic
 
 
 # Training Parameters
-# Training Parameters
-epochs = 3000
-learning_rate = 5.5e-1
+epochs = 1000
+learning_rate = 0.5
 display_step = 100
-save_step = 1000
-batch_size = 1500
+batch_size = 10000
 
 # Network Parameters
 num_input = 64 
@@ -47,7 +45,7 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_test', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -64,18 +62,18 @@ series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.nor
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
-
-train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+#
+#train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
+#train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
+#val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
-
-train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
-val_times = relaxation_times[train_size:train_size+val_size]
+#
+#train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+#train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
+#val_times = relaxation_times[train_size:train_size+val_size]
 
 from rnn_functions import RNN_with_fc
 
@@ -108,41 +106,59 @@ ckpt_dir = '../rnn_model/'
 
 # Start training
 with tf.Session() as sess:
+    ckpt_file = ckpt_dir + 'model_fc_checkpoint2000.ckpt'
+    saver.restore(sess, ckpt_file)
+    
+    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
+                                                         feed_dict={X: series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F'),
+                                                                    Y: relaxation_times})
+    error_t1 = np.sqrt(squared_error_t1)
+    error_t2 = np.sqrt(squared_error_t2)
+
+error = 0
+square_error = 0
+for i in range(len(times)):
+    error += np.abs(times[i]-relaxation_times[i]*times_max)
+    square_error += (times[i]-relaxation_times[i]*times_max)**2
+error /= len(times)
+square_error /= len(times)
+rmserror = np.sqrt(square_error)
 
 # Run the initializer
-    sess.run(init)
-
-#                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-#    val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss/', sess.graph)
-    
-    total_loss = 0
-    for epoch in range(1, epochs+1):
-#                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-#                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
-#                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-        for k in range(len(train_set)):
-            batch_x = train_set[k]
-            batch_y = train_times[k]
-            
-            training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})        
-# Training, validation and loss computation
-#                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
-#                    train_loss_writer.add_summary(summary, step)
-
-#        # Validation
-#        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
-#        val_loss_writer.add_summary(val_loss_sum, step)
-        val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
-
-        if epoch % display_step == 1:
-            print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
-    
-        if epoch % save_step == 0:
-# Save trained network
-            ckpt_file = ckpt_dir + 'model_fc_checkpoint{}.ckpt'.format(epoch)
-            saver.save(sess, ckpt_file)
-
-print("Optimization Finished!")
+#    sess.run(init)
+#
+##                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
+#    val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss/', sess.graph)
+#    
+#    total_loss = 0
+#    for epoch in range(1, epochs+1):
+##                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
+##                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
+##                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
+#        for k in range(len(train_set)):
+#            batch_x = train_set[k]
+#            batch_y = train_times[k]
+#            
+#            training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})        
+## Training, validation and loss computation
+##                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
+##                    train_loss_writer.add_summary(summary, step)
+#
+##        # Validation
+##        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
+##        val_loss_writer.add_summary(val_loss_sum, step)
+#        val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
+#        val_loss_writer.add_summary(val_summary, epoch)
+#
+#        if epoch % display_step == 1:
+#            print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
+#    
+#        if epoch == epochs:
+## Save trained network
+#            ckpt_file = ckpt_dir + 'model_fc_checkpoint{}.ckpt'.format(epoch)
+#            saver.save(sess, ckpt_file)
+#
+#print("Optimization Finished!")
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 

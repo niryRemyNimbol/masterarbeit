@@ -18,15 +18,15 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 1000
-learning_rate = 0.4
-display_step = 20
+epochs = 2000
+learning_rate = 5.5e-1
+display_step = 100
 batch_size = 1000
 
 # Network Parameters
 num_input = 64 
 timesteps = 10 # timesteps
-num_hidden = 10
+num_hidden = 8
 num_output = 2 # number of output parameters
 
 # Fully Connected Layer Parameters
@@ -49,32 +49,44 @@ Y = tf.placeholder("float", [None, num_output])
 dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
-permutation = np.random.permutation(D.shape[1])
+dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
+D_val /= np.linalg.norm(D_val, axis=0)
+#permutation = np.random.permutation(D.shape[1])
 
-train_size = int(np.floor(D.shape[1]*0.8))
-val_size = D.shape[1]-train_size
+#train_size = int(np.floor(D.shape[1]*0.8))
+#val_size = D.shape[1]-train_size
+train_size = D.shape[1]
+val_size = D_val.shape[1]
 batches_per_epoch  = int(np.floor(train_size / batch_size))
 
 #series_real = np.real(D.T[permutation])
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+#series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag_val = np.abs(D_val.T + 0.01 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.01 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
 train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
 train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+#val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
 
-relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
+#relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
+relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
 
 train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
 train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
-val_times = relaxation_times[train_size:train_size+val_size]
+#val_times = relaxation_times[train_size:train_size+val_size]
+val_times = dictionary_val.lut[:, dictionary_val.lut[0, :] >= dictionary_val.lut[1, :]][0:2].T
+val_times_max = np.max(val_times, axis=0)
+val_times /= val_times_max
 
 from rnn_functions import RNN_with_fc
 

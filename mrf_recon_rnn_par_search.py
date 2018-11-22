@@ -17,15 +17,15 @@ import dic
 
 
 # Training Parameters
-epochs = 500
-learning_rate = [4e-1, 2e-1]
+epochs = 2500
+learning_rate = [5.5e-1, 6.5e-2]
 display_step = 20
 batch_size = 1000
 
 # Network Parameters
 num_input = 64 
 timesteps = 10 # timesteps
-num_hidden = [10, 30]
+num_hidden = [8]
 num_output = 2 # number of output parameters
 
 # Fully Connected Layer Parameters
