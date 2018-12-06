@@ -17,8 +17,8 @@ import dic
 
 
 # Training Parameters
-epochs = 5000
-learning_rate = [9.0e-1, 4.0e-1]
+epochs = 10000
+learning_rate = [9.0e-1, 1.0e-3]
 display_step = 20
 early_stop_step = 10
 batch_size = 500
@@ -33,7 +33,9 @@ num_output = 2 # number of output parameters
 num_in_fc = 100
 
 
-# tf Graph input
+# tf Graph inputosses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logit[:, 0]) for logit in logits]
+#            mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logit[:, 1]) for logit in logits]
+#            out = [times_max * lo
 X = tf.placeholder("float", [None, timesteps, num_in_fc])
 Y = tf.placeholder("float", [None, num_output])
 
@@ -85,23 +87,23 @@ from rnn_functions import RNN_with_fc
 for nh in num_hidden:
     for lr in learning_rate:
         with tf.variable_scope("nh{}".format(nh)):
-#            logits = RNN_with_tr(X, num_input, timesteps, nh, num_output)
-            logits = RNN_with_fc(X, num_input, timesteps, nh, num_output)
+            logits = RNN_with_tr(X, num_input, timesteps, nh, num_output)
+#            logits = RNN_with_fc(X, num_input, timesteps, nh, num_output)
 # Define loss and optimizer
-            loss_op = tf.losses.mean_squared_error(Y, logits)
-#            loss_ops = [tf.losses.mean_squared_error(Y, logit) for logit in logits]
+#            loss_op = tf.losses.mean_squared_error(Y, logits)
+            loss_ops = [tf.losses.mean_squared_error(Y, logit) for logit in logits]
 #            loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
             optimizer = tf.train.GradientDescentOptimizer(learning_rate=lr)
-            train_op = optimizer.minimize(loss_op)
-#            train_ops = [optimizer.minimize(loss_op) for loss_op in loss_ops]
+#            train_op = optimizer.minimize(loss_op)
+            train_ops = [optimizer.minimize(loss_op) for loss_op in loss_ops]
 
 # Evaluate model (with test logits, for dropout to be disabled)
-            mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
-            mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
-            out = times_max * logits
-#            mse_t1 = [tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logit[:, 0]) for logit in logits]
-#            mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logit[:, 1]) for logit in logits]
-#            out = [times_max * logit for logit in logits]
+#            mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
+#            mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
+#            out = times_max * logits
+            mse_t1 = [tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logit[:, 0]) for logit in logits]
+            mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logit[:, 1]) for logit in logits]
+            out = [times_max * logit for logit in logits]
 #            mse_t1 = tf.losses.mean_squared_error(labels=Y[:, 0], predictions=logits[:, 0])
 #            mse_t2 = tf.losses.mean_squared_error(labels=Y[:, 1], predictions=logits[:, 1])
 #            out = logits
@@ -136,12 +138,12 @@ for nh in num_hidden:
 #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
 #                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
                     for k in range(len(train_set)):
-#                        batch_x = train_set[k][:,:timesteps,:]
-                        batch_x = train_set[k]
+                        batch_x = train_set[k][:,:timesteps,:]
+#                        batch_x = train_set[k]
                         batch_y = train_times[k]
                         
-                        training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y}) 
-#                        training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
+#                        training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y}) 
+                        training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
         # Training, validation and loss computation
 #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
 #                    train_loss_writer.add_summary(summary, step)
@@ -149,19 +151,29 @@ for nh in num_hidden:
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-                    val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
+#                    val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
+                    val_loss = sess.run(loss_ops, feed_dict={X: val_set[:, :timesteps, :], Y: val_times})
                     
-                    # Test validation loss for early stop
                     if epoch == 1:
-                        best_loss = val_loss
+                        best_loss = val_loss[-1]
                     elif epoch % early_stop_step == 0:
-                        if val_loss < best_loss:
-                            best_loss = val_loss
+                        if val_loss[-1] < best_loss:
+                            best_loss = val_loss[-1]
                         else:
                             counter += 1
                     if counter > 50:
                         break
-#                    val_loss = sess.run(loss_ops, feed_dict={X: val_set[:, :timesteps, :], Y: val_times})
+                    # Test validation loss for early stop
+#                    if epoch == 1:
+#                        best_loss = val_loss
+#                    elif epoch % early_stop_step == 0:
+#                        if val_loss < best_loss:
+#                            best_loss = val_loss
+#                        else:
+#                            counter += 1
+#                    if counter > 50:
+#                        break
+                    
 #                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
 #                    val_loss_writer.add_summary(val_summary, epoch)
                     # Reshuffling the train set
@@ -174,8 +186,8 @@ for nh in num_hidden:
                     train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
             
                     if epoch % display_step == 1:
-                        print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
-#                        print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss[-1]))
+#                        print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
+                        print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss[-1]))
                 
 #                    if epoch == epochs:
 #            # Save trained network
