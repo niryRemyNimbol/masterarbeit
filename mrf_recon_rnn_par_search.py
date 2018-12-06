@@ -17,8 +17,8 @@ import dic
 
 
 # Training Parameters
-epochs = 2000
-learning_rate = [8.0e-2, 2.0e-2]
+epochs = 5000
+learning_rate = [8.0e-3, 2.0e-3]
 display_step = 20
 early_stop_step = 10
 batch_size = 500
@@ -48,7 +48,8 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 #D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -117,7 +118,8 @@ for nh in num_hidden:
             saver = tf.train.Saver()
 
 # Restoration directory
-            ckpt_dir = '../rnn_model_par_search/'
+#            ckpt_dir = '../rnn_model_par_search/'
+            ckpt_dir = 'rnn_model_par_search/'
 
 # Start training
             with tf.Session() as sess:
@@ -157,7 +159,7 @@ for nh in num_hidden:
                             best_loss = val_loss
                         else:
                             counter += 1
-                    if counter > 5:
+                    if counter > 10:
                         break
 #                    val_loss = sess.run(loss_ops, feed_dict={X: val_set[:, :timesteps, :], Y: val_times})
 #                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
