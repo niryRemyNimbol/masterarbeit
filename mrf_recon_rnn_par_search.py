@@ -17,8 +17,8 @@ import dic
 
 
 # Training Parameters
-epochs = 10000
-learning_rate = [1.0e-2, 3.0e-3]
+epochs = 5000
+learning_rate = [2.0e-1, 2.0e-2]
 display_step = 20
 early_stop_step = 10
 batch_size = 500
@@ -183,6 +183,7 @@ for nh in num_hidden:
 #                        saver.save(sess, ckpt_file)
             
             print("Optimization Finished!")
+            print(best_loss)
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
