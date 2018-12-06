@@ -68,33 +68,30 @@ series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.nor
 #val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
-times_max = np.max(relaxation_times, axis=0)
-relaxation_times /= times_max
+#times_max = np.max(relaxation_times, axis=0)
+#relaxation_times /= times_max
 #
 #train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
 #train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 #val_times = relaxation_times[train_size:train_size+val_size]
 
-from rnn_functions import RNN_with_fc
+from rnn_functions import RNN_MAPE
 
-logits = RNN_with_fc(X, num_input, timesteps, num_hidden, num_output)
+logits = RNN_MAPE(X, num_input, timesteps, num_hidden, num_output)
 
 # Define loss and optimizer
-loss_op = tf.losses.mean_squared_error(Y, logits)
-#loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
+#loss_op = tf.losses.mean_squared_error(Y, logits)
+loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 train_op = optimizer.minimize(loss_op)
 
 # Evaluate model (with test logits, for dropout to be disabled)
-mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
-mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
-out = times_max * logits
-#mse_t1 = tf.losses.mean_squared_error(labels=Y[:, 0], predictions=logits[:, 0])
-#mse_t2 = tf.losses.mean_squared_error(labels=Y[:, 1], predictions=logits[:, 1])
-#out = logits
+mse_t1 = tf.losses.mean_squared_error(labels=Y[:, 0], predictions=logits[:, 0])
+mse_t2 = tf.losses.mean_squared_error(labels=Y[:, 1], predictions=logits[:, 1])
+out = logits
 
 # Initialize the variables (i.e. assign their default value)
-#init = tf.global_variables_initializer()
+init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
@@ -109,7 +106,7 @@ ckpt_dir = '../rnn_model/'
 
 # Start training
 with tf.Session() as sess:
-    ckpt_file = ckpt_dir + 'model_fc_checkpoint3000.ckpt'
+    ckpt_file = ckpt_dir + 'model_mape_checkpoint1200.ckpt'
     saver.restore(sess, ckpt_file)
     
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
@@ -121,8 +118,8 @@ with tf.Session() as sess:
 error = 0
 square_error = 0
 for i in range(len(times)):
-    error += np.abs(times[i]-relaxation_times[i]*times_max)
-    square_error += (times[i]-relaxation_times[i]*times_max)**2
+    error += np.abs(times[i]-relaxation_times[i])
+    square_error += (times[i]-relaxation_times[i])**2
 error /= len(times)
 square_error /= len(times)
 rmserror = np.sqrt(square_error)

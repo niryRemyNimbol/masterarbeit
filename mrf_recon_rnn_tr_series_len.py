@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 800
+epochs = 1000
 learning_rate = 5.5e-1
 display_step = 20
 batch_size = 500
@@ -88,24 +88,29 @@ val_times = dictionary_val.lut[:, dictionary_val.lut[0, :] >= dictionary_val.lut
 val_times_max = np.max(val_times, axis=0)
 val_times /= val_times_max
 
-from rnn_functions import RNN_with_fc
+from rnn_functions import RNN_with_tr
 
 val_losses = []
 best_val_losses = []
+t1_err = {}
+t2_err = {}
 for timestep in range(1, timesteps+1):
     X = tf.placeholder("float", [None, timestep, num_in_fc])
-    logits = RNN_with_fc(X, num_input, timestep, num_hidden, num_output)
+    logits = RNN_with_tr(X, num_input, timestep, num_hidden, num_output)
 
     # Define loss and optimizer
-    loss_op = tf.losses.mean_squared_error(Y, logits)
+    loss_ops = [tf.losses.mean_squared_error(Y, logit) for logit in logits]
     #loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-    train_op = optimizer.minimize(loss_op)
+    train_ops = [optimizer.minimize(loss_op) for loss_op in loss_ops]
     
     # Evaluate model (with test logits, for dropout to be disabled)
-    mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
-    mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
-    out = times_max * logits
+    mse_t1 = [tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logit[:, 0]) for logit in logits]
+    mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logit[:, 1]) for logit in logits]
+    out = [times_max * logit for logit in logits]
+    
+    t1_err[timestep] = []
+    t2_err[timestep] = []
     
     # Initialize the variables (i.e. assign their default value)
     init = tf.global_variables_initializer()
@@ -139,8 +144,8 @@ for timestep in range(1, timesteps+1):
                 batch_x = train_set[k][:,:timestep,:]
                 batch_y = train_times[k]
                 
-                training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})
-                total_loss += batch_loss
+                training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
+                total_loss += batch_loss[-1]
     # Training, validation and loss computation
     #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
     #                    train_loss_writer.add_summary(summary, step)
@@ -151,12 +156,23 @@ for timestep in range(1, timesteps+1):
 #            val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
 #            val_loss_writer.add_summary(val_summary, epoch)
             total_loss /= len(train_set) 
-            val_loss = sess.run(loss_op, feed_dict={X: val_set[:, :timestep, :], Y: val_times})
-            val_losses.append(val_loss)
+            val_loss, mse1, mse2 = sess.run([loss_ops, mse_t1, mse_t2], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
+            val_losses.append(val_loss[-1])
+            t1_err[timestep].append(mse1)
+            t2_err[timestep].append(mse2)
+            
+            # Reshuffling the train set
+            permutation = np.random.permutation(D.shape[1])
+            series_mag = series_mag[permutation]
+            train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
+            train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
+            relaxation_times = relaxation_times[permutation]            
+            train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+            train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
     
             if epoch % display_step == 1:
                 print("Epoch " + str(epoch) + ", average training loss= " + "{:.10f}".format(total_loss))
-                print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss))
+                print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss[-1]))
         
             if epoch == epochs:
     # Save trained network
@@ -171,7 +187,7 @@ fig = plt.figure()
 fig.add_axes([0.2,0.2,0.6,0.6])
 fig.axes[0].plot(best_val_losses)
 fig.text(0.5,0.9,"Validation loss vs series length", weight='bold', verticalalignment='top', horizontalalignment='center', size=14)
-fig.savefig('series_length_ter.jpg')
+#fig.savefig('series_length_ter.jpg')
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
