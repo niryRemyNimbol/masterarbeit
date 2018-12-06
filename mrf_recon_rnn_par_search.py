@@ -17,8 +17,8 @@ import dic
 
 
 # Training Parameters
-epochs = 5000
-learning_rate = [8.0e-3, 2.0e-3]
+epochs = 10000
+learning_rate = [1.0e-2, 3.0e-3]
 display_step = 20
 early_stop_step = 10
 batch_size = 500
