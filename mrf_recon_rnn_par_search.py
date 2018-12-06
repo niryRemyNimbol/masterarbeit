@@ -18,7 +18,7 @@ import dic
 
 # Training Parameters
 epochs = 5000
-learning_rate = [2.0e-1, 2.0e-2]
+learning_rate = [1.0e-1, 1.0e-2]
 display_step = 20
 early_stop_step = 10
 batch_size = 500
@@ -159,7 +159,7 @@ for nh in num_hidden:
                             best_loss = val_loss
                         else:
                             counter += 1
-                    if counter > 10:
+                    if counter > 50:
                         break
 #                    val_loss = sess.run(loss_ops, feed_dict={X: val_set[:, :timesteps, :], Y: val_times})
 #                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
