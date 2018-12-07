@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 epochs = 10000
 learning_rate = 8.0e-1
 display_step = 20
-early_stop_step = 10
+early_stop_step = 5
 batch_size = 500
 
 # Network Parameters
@@ -202,11 +202,57 @@ for timestep in range(1, timesteps+1):
     print(best_loss)
 
 # plot validation loss as a function of the series length    
-fig = plt.figure()
-fig.add_axes([0.2,0.2,0.6,0.6])
-fig.axes[0].plot(best_val_losses)
-fig.text(0.5,0.9,"Validation loss vs series length", weight='bold', verticalalignment='top', horizontalalignment='center', size=14)
-fig.savefig('figures/series_length_tr.jpg')
+fig1 = plt.figure(1)
+fig1.add_axes([0,0,1,1])
+fig1.axes[0].plot(best_val_losses)
+fig1.axes[0].set_xlabel('Series length')
+fig1.axes[0].set_ylabel('Validation loss')
+fig1.axes[0].set_title('Validation loss vs series length', weight='bold')
+fig1.savefig('figures/series_length_tr.pdf')
+
+# plot T1 error evolution with each epoch depending on the rnn length
+fig2, axs2 = plt.subplots(2, 5, sharey=True, figsize=(25,10))
+fig2.text(.5,.99,'T1 error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
+for cell in range(10):
+    for x in range(5):
+        for y in range(2):
+            if y*5+x>=cell:
+                axs2[y, x].plot([np.sqrt(t1_err[y*5+x+1][k][cell]) for k in range(len(t1_err[y*5+x+1]))])
+    axs2[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
+    axs2[cell//5, cell%5].set_xlabel('Epoch')
+    axs2[cell//5, cell%5].set_ylabel('RMSE (s)')
+    axs2[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+1)])
+fig2.savefig('figures/t1_error.pdf')     
+
+# plot T2 error evolution with each epoch depending on the rnn length
+fig3, axs3 = plt.subplots(2, 5, sharey=True, figsize=(25,10))
+fig3.text(.5,.99,'T2 error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
+for cell in range(10):
+    for x in range(5):
+        for y in range(2):
+            if y*5+x>=cell:
+                axs2[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][cell]) for k in range(len(t2_err[y*5+x+1]))])
+    axs3[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
+    axs3[cell//5, cell%5].set_xlabel('Epoch')
+    axs3[cell//5, cell%5].set_ylabel('RMSE (s)')
+    axs3[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+1)])
+fig3.savefig('figures/t2_error.pdf')    
+
+# plot each cell error error on the same plot for T1 and T2 (10 cell LSTM)
+fig4, axs4 = plt.subplots(1, 2, sharey=True, figsize(20, 10))
+fig4.text(.5,.99,'Cell-wise error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
+for cell in range(10):
+    axs4[0].plot([np.sqrt(t1_err[10][k][cell]) for k in range(len(t1_err[10]))])    
+    axs4[1].plot([np.sqrt(t2_err[10][k][cell]) for k in range(len(t2_err[10]))])
+axs4[0].set_title('T1', weight='bold')
+axs4[1].set_title('T2', weight='bold')
+axs4[0].legend(['Cell {}'.format(n) for n in range(1,11)])
+axs4[1].legend(['Cell {}'.format(n) for n in range(1,11)])
+axs[0].set_xlabel('Epoch')
+axs[0].set_ylabel('RMSE (ms)')
+axs[1].set_xlabel('Epoch')
+axs[1].set_ylabel('RMSE (ms)')
+fig4.savefig('figures/cell-wise_error.pdf')
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
