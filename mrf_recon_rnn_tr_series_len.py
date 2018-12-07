@@ -18,9 +18,10 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 1000
-learning_rate = 5.5e-1
+epochs = 10000
+learning_rate = 8.0e-1
 display_step = 20
+early_stop_step = 10
 batch_size = 500
 
 # Network Parameters
@@ -46,10 +47,12 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
-dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+#dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+dictionary_val = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
 D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 D_val /= np.linalg.norm(D_val, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -135,6 +138,7 @@ for timestep in range(1, timesteps+1):
     #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
 #        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}/'.format(num_in_fc*timestep), sess.graph)
         
+        counter = 0
         for epoch in range(1, epochs+1):
     #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
     #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
@@ -161,6 +165,8 @@ for timestep in range(1, timesteps+1):
             t1_err[timestep].append(mse1)
             t2_err[timestep].append(mse2)
             
+            
+            
             # Reshuffling the train set
             permutation = np.random.permutation(D.shape[1])
             series_mag = series_mag[permutation]
@@ -179,15 +185,28 @@ for timestep in range(1, timesteps+1):
 #                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
 #                saver.save(sess, ckpt_file)
                 best_val_losses.append(min(val_losses))
+                
+            if epoch == 1:
+                best_loss = val_loss[-1]
+            elif epoch % early_stop_step == 0:
+                if val_loss[-1] < best_loss:
+                    best_loss = val_loss[-1]
+                    counter = 0
+                else:
+                    counter += 1
+            if counter > 10:
+                best_val_losses.append(min(val_losses))
+                break
     
     print("Optimization Finished!")
+    print(best_loss)
 
 # plot validation loss as a function of the series length    
 fig = plt.figure()
 fig.add_axes([0.2,0.2,0.6,0.6])
 fig.axes[0].plot(best_val_losses)
 fig.text(0.5,0.9,"Validation loss vs series length", weight='bold', verticalalignment='top', horizontalalignment='center', size=14)
-#fig.savefig('series_length_ter.jpg')
+fig.savefig('figures/series_length_tr.jpg')
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 

@@ -27,7 +27,7 @@ EXPOSE 6006
 
 # Run when the container launches
 
-CMD exec python mrf_recon_rnn_par_search.py
-#CMD exec python mrf_recon_rnn_tr_series_len.py
+#CMD exec python mrf_recon_rnn_par_search.py
+CMD exec python mrf_recon_rnn_tr_series_len.py
 #CMD exec python mrf_recon_rnn_fc_init.py
 #CMD exec python mrf_recon_rnn_fc_series_len.py
