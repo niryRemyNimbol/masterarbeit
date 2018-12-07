@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 10000
+epochs = 5000
 learning_rate = 8.0e-1
 display_step = 20
 early_stop_step = 5
@@ -47,12 +47,12 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-#dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
-dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
-#dictionary_val = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+#dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+dictionary_val = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
 D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 D_val /= np.linalg.norm(D_val, axis=0)
 permutation = np.random.permutation(D.shape[1])
