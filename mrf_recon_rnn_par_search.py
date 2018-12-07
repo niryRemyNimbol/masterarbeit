@@ -50,8 +50,8 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-#dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 #D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -193,7 +193,7 @@ for nh in num_hidden:
                             counter = 0
                         else:
                             counter += 1
-                    if counter > 5:
+                    if counter > 10:
                         break
             
             print("Optimization Finished!")
