@@ -50,8 +50,8 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 #D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -154,15 +154,7 @@ for nh in num_hidden:
 #                    val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
                     val_loss = sess.run(loss_ops, feed_dict={X: val_set[:, :timesteps, :], Y: val_times})
                     
-                    if epoch == 1:
-                        best_loss = val_loss[-1]
-                    elif epoch % early_stop_step == 0:
-                        if val_loss[-1] < best_loss:
-                            best_loss = val_loss[-1]
-                        else:
-                            counter += 1
-                    if counter > 50:
-                        break
+                    
                     # Test validation loss for early stop
 #                    if epoch == 1:
 #                        best_loss = val_loss
@@ -193,6 +185,16 @@ for nh in num_hidden:
 #            # Save trained network
 #                        ckpt_file = ckpt_dir + 'model_lr{}_nh{}_checkpoint{}.ckpt'.format(lr, nh, epoch)
 #                        saver.save(sess, ckpt_file)
+                    if epoch == 1:
+                        best_loss = val_loss[-1]
+                    elif epoch % early_stop_step == 0:
+                        if val_loss[-1] < best_loss:
+                            best_loss = val_loss[-1]
+                            counter = 0
+                        else:
+                            counter += 1
+                    if counter > 5:
+                        break
             
             print("Optimization Finished!")
             print(best_loss)
