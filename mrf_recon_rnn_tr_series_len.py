@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 5000
+epochs = 10000
 learning_rate = 8.0e-1
 display_step = 20
 early_stop_step = 5
@@ -212,7 +212,7 @@ fig1.savefig('figures/series_length_tr.pdf')
 
 # plot T1 error evolution with each epoch depending on the rnn length
 fig2, axs2 = plt.subplots(2, 5, sharey=True, figsize=(25,10))
-fig2.text(.5,.99,'T1 error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
+fig2.text(.5,.99,'T1 error', weight='bold', horizontalalignment='center', verticalalignment='top', size=16 )
 for cell in range(10):
     for x in range(5):
         for y in range(2):
@@ -221,26 +221,26 @@ for cell in range(10):
     axs2[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
     axs2[cell//5, cell%5].set_xlabel('Epoch')
     axs2[cell//5, cell%5].set_ylabel('RMSE (s)')
-    axs2[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+1)])
+    axs2[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+2)])
 fig2.savefig('figures/t1_error.pdf')     
 
 # plot T2 error evolution with each epoch depending on the rnn length
 fig3, axs3 = plt.subplots(2, 5, sharey=True, figsize=(25,10))
-fig3.text(.5,.99,'T2 error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
+fig3.text(.5,.99,'T2 error', weight='bold', horizontalalignment='center', verticalalignment='top', size=16 )
 for cell in range(10):
     for x in range(5):
         for y in range(2):
             if y*5+x>=cell:
-                axs2[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][cell]) for k in range(len(t2_err[y*5+x+1]))])
+                axs3[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][cell]) for k in range(len(t2_err[y*5+x+1]))])
     axs3[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
     axs3[cell//5, cell%5].set_xlabel('Epoch')
     axs3[cell//5, cell%5].set_ylabel('RMSE (s)')
-    axs3[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+1)])
+    axs3[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+2)])
 fig3.savefig('figures/t2_error.pdf')    
 
 # plot each cell error error on the same plot for T1 and T2 (10 cell LSTM)
-fig4, axs4 = plt.subplots(1, 2, sharey=True, figsize=(20, 10))
-fig4.text(.5,.99,'Cell-wise error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
+fig4, axs4 = plt.subplots(1, 2, sharey=True, figsize=(10, 5))
+fig4.text(.5,.99,'Cell-wise error', weight='bold', horizontalalignment='center', verticalalignment='top', size=16 )
 for cell in range(10):
     axs4[0].plot([np.sqrt(t1_err[10][k][cell]) for k in range(len(t1_err[10]))])    
     axs4[1].plot([np.sqrt(t2_err[10][k][cell]) for k in range(len(t2_err[10]))])
