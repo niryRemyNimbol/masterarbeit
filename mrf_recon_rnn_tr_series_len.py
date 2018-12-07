@@ -47,12 +47,12 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
-#dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
-dictionary_val = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+#dictionary_val = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
 D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 D_val /= np.linalg.norm(D_val, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -203,7 +203,7 @@ for timestep in range(1, timesteps+1):
 
 # plot validation loss as a function of the series length    
 fig1 = plt.figure(1)
-fig1.add_axes([0,0,1,1])
+fig1.add_axes([0.2,0.2,0.6,0.6])
 fig1.axes[0].plot(best_val_losses)
 fig1.axes[0].set_xlabel('Series length')
 fig1.axes[0].set_ylabel('Validation loss')
@@ -216,8 +216,10 @@ fig2.text(.5,.99,'T1 error', weight='bold', horizontalalignment='center', vertic
 for cell in range(10):
     for x in range(5):
         for y in range(2):
-            if y*5+x>=cell:
+            if y*5+x==cell:
                 axs2[y, x].plot([np.sqrt(t1_err[y*5+x+1][k][cell]) for k in range(len(t1_err[y*5+x+1]))])
+                if cell+1<10:
+                    axs2[y, x].plot([np.sqrt(t1_err[y*5+x+1][k][9]) for k in range(len(t1_err[y*5+x+1]))])
     axs2[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
     axs2[cell//5, cell%5].set_xlabel('Epoch')
     axs2[cell//5, cell%5].set_ylabel('RMSE (s)')
@@ -230,8 +232,10 @@ fig3.text(.5,.99,'T2 error', weight='bold', horizontalalignment='center', vertic
 for cell in range(10):
     for x in range(5):
         for y in range(2):
-            if y*5+x>=cell:
+            if y*5+x==cell:
                 axs3[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][cell]) for k in range(len(t2_err[y*5+x+1]))])
+                if cell+1<10:
+                    axs3[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][9]) for k in range(len(t2_err[y*5+x+1]))])
     axs3[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
     axs3[cell//5, cell%5].set_xlabel('Epoch')
     axs3[cell//5, cell%5].set_ylabel('RMSE (s)')
@@ -241,13 +245,13 @@ fig3.savefig('figures/t2_error.pdf')
 # plot each cell error error on the same plot for T1 and T2 (10 cell LSTM)
 fig4, axs4 = plt.subplots(1, 2, sharey=True, figsize=(10, 5))
 fig4.text(.5,.99,'Cell-wise error', weight='bold', horizontalalignment='center', verticalalignment='top', size=16 )
-for cell in range(10):
+for cell in range(0,10,3):
     axs4[0].plot([np.sqrt(t1_err[10][k][cell]) for k in range(len(t1_err[10]))])    
     axs4[1].plot([np.sqrt(t2_err[10][k][cell]) for k in range(len(t2_err[10]))])
 axs4[0].set_title('T1', weight='bold')
 axs4[1].set_title('T2', weight='bold')
-axs4[0].legend(['Cell {}'.format(n) for n in range(1,11)])
-axs4[1].legend(['Cell {}'.format(n) for n in range(1,11)])
+axs4[0].legend(['Cell {}'.format(n) for n in range(1,11,3)])
+axs4[1].legend(['Cell {}'.format(n) for n in range(1,11,3)])
 axs4[0].set_xlabel('Epoch')
 axs4[0].set_ylabel('RMSE (ms)')
 axs4[1].set_xlabel('Epoch')
