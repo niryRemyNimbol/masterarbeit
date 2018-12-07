@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 10000
+epochs = 5000
 learning_rate = 8.0e-1
 display_step = 20
 early_stop_step = 5
@@ -239,7 +239,7 @@ for cell in range(10):
 fig3.savefig('figures/t2_error.pdf')    
 
 # plot each cell error error on the same plot for T1 and T2 (10 cell LSTM)
-fig4, axs4 = plt.subplots(1, 2, sharey=True, figsize(20, 10))
+fig4, axs4 = plt.subplots(1, 2, sharey=True, figsize=(20, 10))
 fig4.text(.5,.99,'Cell-wise error', weight='bold', horizontalalignment='center', verticalalignment='bottom', size=16 )
 for cell in range(10):
     axs4[0].plot([np.sqrt(t1_err[10][k][cell]) for k in range(len(t1_err[10]))])    
@@ -248,10 +248,10 @@ axs4[0].set_title('T1', weight='bold')
 axs4[1].set_title('T2', weight='bold')
 axs4[0].legend(['Cell {}'.format(n) for n in range(1,11)])
 axs4[1].legend(['Cell {}'.format(n) for n in range(1,11)])
-axs[0].set_xlabel('Epoch')
-axs[0].set_ylabel('RMSE (ms)')
-axs[1].set_xlabel('Epoch')
-axs[1].set_ylabel('RMSE (ms)')
+axs4[0].set_xlabel('Epoch')
+axs4[0].set_ylabel('RMSE (ms)')
+axs4[1].set_xlabel('Epoch')
+axs4[1].set_ylabel('RMSE (ms)')
 fig4.savefig('figures/cell-wise_error.pdf')
 
 #     Calculate MSE for test time series
