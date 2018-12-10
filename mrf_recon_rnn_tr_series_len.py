@@ -194,7 +194,7 @@ for timestep in range(1, timesteps+1):
                     counter = 0
                 else:
                     counter += 1
-            if counter > 10:
+            if counter > 20:
                 best_val_losses.append(min(val_losses))
                 break
     
@@ -219,11 +219,11 @@ for cell in range(10):
             if y*5+x==cell:
                 axs2[y, x].plot([np.sqrt(t1_err[y*5+x+1][k][cell]) for k in range(len(t1_err[y*5+x+1]))])
                 if cell+1<10:
-                    axs2[y, x].plot([np.sqrt(t1_err[y*5+x+1][k][9]) for k in range(len(t1_err[y*5+x+1]))])
+                    axs2[y, x].plot([np.sqrt(t1_err[10][k][0]) for k in range(len(t1_err[10]))])
     axs2[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
     axs2[cell//5, cell%5].set_xlabel('Epoch')
     axs2[cell//5, cell%5].set_ylabel('RMSE (s)')
-    axs2[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+2)])
+    axs2[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in [cell+1, 10]])
 fig2.savefig('figures/t1_error.pdf')     
 
 # plot T2 error evolution with each epoch depending on the rnn length
@@ -235,11 +235,11 @@ for cell in range(10):
             if y*5+x==cell:
                 axs3[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][cell]) for k in range(len(t2_err[y*5+x+1]))])
                 if cell+1<10:
-                    axs3[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][9]) for k in range(len(t2_err[y*5+x+1]))])
+                    axs3[y, x].plot([np.sqrt(t2_err[y*5+x+1][k][0]) for k in range(len(t2_err[10]))])
     axs3[cell//5, cell%5].set_title('Cell {}'.format(cell+1), weight='bold')
     axs3[cell//5, cell%5].set_xlabel('Epoch')
     axs3[cell//5, cell%5].set_ylabel('RMSE (s)')
-    axs3[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in range(1, cell+2)])
+    axs3[cell//5, cell%5].legend(['{} cell LSTM'.format(n) for n in [cell+1,10]])
 fig3.savefig('figures/t2_error.pdf')    
 
 # plot each cell error error on the same plot for T1 and T2 (10 cell LSTM)
