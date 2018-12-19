@@ -61,7 +61,7 @@ ckpt_dir = '../rnn_model/'
 
 with tf.Session() as sess:
 #    ckpt_file = ckpt_dir + 'model_fc_checkpoint3000.ckpt'
-    ckpt_file = ckpt_dir + 'model_var_tr_checkpoint500.ckpt'
+    ckpt_file = ckpt_dir + 'model_var_tr_checkpoint1000.ckpt'
     saver.restore(sess, ckpt_file)
     
     times = sess.run(out, feed_dict={X: series.T.reshape((series.shape[1], timesteps, num_in_fc), order='F')})

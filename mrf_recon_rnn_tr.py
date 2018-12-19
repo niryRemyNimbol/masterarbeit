@@ -48,7 +48,7 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 #dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_var_tr', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_var_tr_test', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val_var_tr', 1000, 10)
@@ -108,11 +108,9 @@ mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=
 out = [times_max * logit for logit in logits]
 
 # Initialize the variables (i.e. assign their default value)
-init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 #merged = tf.summary.merge_all()
 
 # Saver
@@ -120,68 +118,21 @@ saver = tf.train.Saver()
 
 # Restoration directory
 #ckpt_dir = '../rnn_model/'
-ckpt_dir = 'rnn_model/'
+ckpt_dir = '../rnn_model/'
 
 # Start training
 with tf.Session() as sess:
 
 
-# Save# Run the initializer
-    sess.run(init)
+# Save trained network
+    ckpt_file = ckpt_dir + 'model_var_tr_checkpoint1000.ckpt'
+    saver.restore(sess, ckpt_file)
+    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
+                                                         feed_dict={X: test_set,
+                                                                    Y: relaxation_times})
+    error_t1 = [np.sqrt(squared_error_t1[k]) for k in range(len(squared_error_t1))]
+    error_t2 = [np.sqrt(squared_error_t2[k]) for k in range(len(squared_error_t2))]
 
-#                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-#    val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss/', sess.graph)
-
-    total_loss = 0
-    counter = 0
-    for epoch in range(1, epochs+1):
-#                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-#                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
-#                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-        for k in range(len(train_set)):
-            batch_x = train_set[k]
-            batch_y = train_times[k]
-
-            training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
-# Training, validation and loss computation
-#                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
-#                    train_loss_writer.add_summary(summary, step)
-
-#        # Validation
-#        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
-#        val_loss_writer.add_summary(val_loss_sum, step)
-        val_loss = sess.run(loss_ops, feed_dict={X: val_set, Y: val_times})
-
-        # Reshuffling the train set
-        permutation = np.random.permutation(D.shape[1])
-        series_mag = series_mag[permutation]
-        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-        relaxation_times = relaxation_times[permutation]
-        train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-        train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
-
-        if epoch % display_step == 1:
-            print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss[-1]))
-
-        if epoch == 1:
-            best_loss = val_loss[-1]
-        elif epoch % early_stop_step == 0:
-            if val_loss[-1] < best_loss:
-                best_loss = val_loss[-1]
-                counter = 0
-            else:
-                counter += 1
-        if counter > 20:
-            ckpt_file = ckpt_dir + 'model_var_tr_checkpoint{}.ckpt'.format(epoch)
-            saver.save(sess, ckpt_file)
-            break
-
-        if epoch  == epochs: trained network
-            ckpt_file = ckpt_dir + 'model_var_tr_checkpoint{}.ckpt'.format(epoch)
-            saver.save(sess, ckpt_file)
-
-print("Optimization Finished!")
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
