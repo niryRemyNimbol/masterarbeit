@@ -18,8 +18,8 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 5000
-learning_rate = 8.0e-1
+epochs = 500
+learning_rate = 5.0e-1
 display_step = 20
 early_stop_step = 5
 batch_size = 500
@@ -120,7 +120,7 @@ for timestep in range(1, timesteps+1):
     
     # Summaries to view in tensorboard
 #    train_loss_summary = [tf.summary.scalar('training_loss_len{}_cell{}'.format(timestep, k), loss_ops[k]) for loss_op in range(len(loss_ops))]
-    val_loss_summary = [tf.summary.scalar('validation_loss_len{}_cell{}'.format(timestep, k), loss_ops[k]) for k in range(len(loss_ops))]
+    val_loss_summary = [tf.summary.scalar('validation_loss', loss_ops[k]) for k in range(len(loss_ops))]
     #merged = tf.summary.merge_all()
     
     # Saver
@@ -136,7 +136,7 @@ for timestep in range(1, timesteps+1):
         sess.run(init)
     
 #        train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss/', sess.graph)
+        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}'.format(timestep), sess.graph)
         
         counter = 0
         for epoch in range(1, epochs+1):
