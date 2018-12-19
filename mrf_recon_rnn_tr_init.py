@@ -177,7 +177,7 @@ with tf.Session() as sess:
             saver.save(sess, ckpt_file)
             break
 
-        if epoch  == epochs: trained network
+        if epoch  == epochs:
             ckpt_file = ckpt_dir + 'model_var_tr_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
 
