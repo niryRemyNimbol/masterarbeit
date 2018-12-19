@@ -136,8 +136,7 @@ for timestep in range(1, timesteps+1):
         sess.run(init)
     
 #        train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}'.format(timestep), sess.graph)
-        
+
         counter = 0
         for epoch in range(1, epochs+1):
     #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
@@ -162,8 +161,9 @@ for timestep in range(1, timesteps+1):
 #            val_loss_writer.add_summary(val_summary, epoch)
             total_loss /= len(train_set) 
             val_loss, mse1, mse2, summary = sess.run([loss_ops, mse_t1, mse_t2, [val_loss_summary[cell] for cell in range(len(val_loss_summary))]], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
-            for val_sum in summary:
-                val_loss_writer.add_summary(val_sum, epoch)
+            for k in range(len(summary)):
+                val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}_cell{}'.format(timestep, k), sess.graph)
+                val_loss_writer.add_summary(summary[k], epoch)
             val_losses.append(val_loss[-1])
             t1_err[timestep].append(mse1)
             t2_err[timestep].append(mse2)
