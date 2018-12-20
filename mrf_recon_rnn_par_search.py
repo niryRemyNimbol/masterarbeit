@@ -17,8 +17,8 @@ import dic
 
 
 # Training Parameters
-epochs = 10000
-learning_rate = [9.0e-1, 1.0e-3]
+epochs = 2000
+learning_rate = [6.0e-2, 4.0e-2]
 display_step = 20
 early_stop_step = 10
 batch_size = 500
@@ -64,7 +64,9 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag /= np.linalg.norm(series_mag, axis=0)
+series_mag = series_mag.T
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T

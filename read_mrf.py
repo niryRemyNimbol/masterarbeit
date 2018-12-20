@@ -31,8 +31,10 @@ def read_mrf_data(data_path, Nreps, dim):
     
 data_path = '../recon_q_examples/data/data'
 mrf = np.abs(read_mrf_data(data_path, 1000, 256))
-series = mrf.reshape((1000, 256**2))
-series /= np.amax(series, axis=0)
+series = mrf.reshape((1000, 256**2)).T
+series /= np.linalg.norm(series, axis=0)
+#series /= np.amax(series, axis=0)
+series = series.T
 times_max = np.array([4., .6])
 
 # Network Parameters
@@ -74,3 +76,4 @@ for k in range(len(imgs)):
     axs[0, k].imshow(imgs[k][:, :, 0], cmap='hot', origin='lower', vmin=0, vmax=3.0)
     axs[0, k].set_title('T1, timestep {}'.format(k), weight='bold')
     axs[1, k].imshow(imgs[k][:, :, 1], cmap='copper', origin='lower', vmin=0, vmax=0.3)
+fig.show()
