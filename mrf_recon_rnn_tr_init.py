@@ -67,25 +67,26 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
 series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
-series_mag /= np.amax(series_mag, axis=0)
+series_mag /= np.linalg.norm(series_mag, axis=0)
+#series_mag /= np.amax(series_mag, axis=0)
 #series_mag_val = np.abs(D_val.T + 0.01 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.01 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-#train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-#train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-#val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
+val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 #val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
-test_set = series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F')
+#test_set = series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
 
-#train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-#train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
-#val_times = relaxation_times[train_size:train_size+val_size]
+train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
+val_times = relaxation_times[train_size:train_size+val_size]
 #val_times = dictionary_val.lut[:, dictionary_val.lut[0, :] >= dictionary_val.lut[1, :]][0:2].T
 #val_times_max = np.max(val_times, axis=0)
 #val_times /= val_times_max
@@ -173,12 +174,12 @@ with tf.Session() as sess:
             else:
                 counter += 1
         if counter > 20:
-            ckpt_file = ckpt_dir + 'model_var_tr_checkpoint{}.ckpt'.format(epoch)
+            ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
             break
 
         if epoch  == epochs:
-            ckpt_file = ckpt_dir + 'model_var_tr_checkpoint{}.ckpt'.format(epoch)
+            ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
 
 print("Optimization Finished!")
