@@ -62,8 +62,9 @@ saver = tf.train.Saver()
 ckpt_dir = '../rnn_model/'
 
 with tf.Session() as sess:
-#    ckpt_file = ckpt_dir + 'model_fc_checkpoint3000.ckpt'
+#    ckpt_file = ckpt_dir + 'model_fc_checkpoint1000.ckpt'
     ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint465.ckpt'
+#    ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint1000.ckpt'
     saver.restore(sess, ckpt_file)
     
     times = sess.run(out, feed_dict={X: series.T.reshape((series.shape[1], timesteps, num_in_fc), order='F')})
@@ -73,7 +74,9 @@ imgs = [time.reshape((256,256,2), order='C') for time in times]
 
 fig, axs = plt.subplots(2, 10, figsize=(50,10))
 for k in range(len(imgs)):
-    axs[0, k].imshow(imgs[k][:, :, 0], cmap='hot', origin='lower', vmin=0, vmax=3.0)
+    t1 = axs[0, k].imshow(imgs[k][:, :, 0], cmap='hot', origin='lower', vmin=0, vmax=3.0)
+    fig.colorbar(t1, ax=axs[0, k])
     axs[0, k].set_title('T1, timestep {}'.format(k+1), weight='bold')
-    axs[1, k].imshow(imgs[k][:, :, 1], cmap='copper', origin='lower', vmin=0, vmax=0.3)
+    t2 = axs[1, k].imshow(imgs[k][:, :, 1], cmap='copper', origin='lower', vmin=0, vmax=0.3)
+    fig.colorbar(t2, ax=axs[1, k])
 fig.show()

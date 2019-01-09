@@ -174,10 +174,10 @@ with tf.Session() as sess:
                 counter = 0
             else:
                 counter += 1
-        #if counter > 20:
-         #   ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
-         #   saver.save(sess, ckpt_file)
-         #   break
+        if counter > 20:
+            ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
+            saver.save(sess, ckpt_file)
+            break
 
         if epoch  == epochs:
             ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
