@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec  4 18:35:53 2018
-
-@author: andriama
-"""
-
 import numpy as np
 import tensorflow as tf
 from rnn_functions import RNN_with_fc
@@ -30,7 +23,7 @@ mrf = read_mrf_data(data_path, 1000, 256)
 series = mrf.reshape((1000, 256**2)).T
 series /= np.linalg.norm(series, axis=0)
 #series /= np.amax(series, axis=0)
-series = series.T
+series = series.T[0:1000, :]
 times_max = np.array([4., .6])
 
 # Network Parameters

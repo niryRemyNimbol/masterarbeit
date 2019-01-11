@@ -18,9 +18,10 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 800
+epochs = 1000
 learning_rate = 5.5e-1
 display_step = 20
+early_stop_step = 5
 batch_size = 500
 
 # Network Parameters
@@ -51,7 +52,7 @@ dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
+dictionary_val = dic.dic('recon_q_examples/dict/', 'fisp_mrf_val', 1000, 10)
 D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 D_val /= np.linalg.norm(D_val, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -92,8 +93,8 @@ val_times /= val_times_max
 
 from rnn_functions import RNN_with_fc
 
-val_losses = []
-best_val_losses = []
+#val_losses = []
+#best_val_losses = []
 for timestep in range(1, timesteps+1):
     X = tf.placeholder("float", [None, timestep, num_in_fc])
     logits = RNN_with_fc(X, num_input, timestep, num_hidden, num_output)
@@ -121,7 +122,7 @@ for timestep in range(1, timesteps+1):
     saver = tf.train.Saver()
     
     # Restoration directory
-    ckpt_dir = '../rnn_model/'
+    ckpt_dir = 'rnn_model/rnn_model_len{}/'.format(timestep)
     
     # Start training
     with tf.Session() as sess:
@@ -131,7 +132,7 @@ for timestep in range(1, timesteps+1):
     
     #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
 #        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}/'.format(num_in_fc*timestep), sess.graph)
-        
+        counter = 0
         for epoch in range(1, epochs+1):
     #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
     #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
@@ -154,26 +155,39 @@ for timestep in range(1, timesteps+1):
 #            val_loss_writer.add_summary(val_summary, epoch)
             total_loss /= len(train_set) 
             val_loss = sess.run(loss_op, feed_dict={X: val_set[:, :timestep, :], Y: val_times})
-            val_losses.append(val_loss)
+#            val_losses.append(val_loss)
     
             if epoch % display_step == 1:
                 print("Epoch " + str(epoch) + ", average training loss= " + "{:.10f}".format(total_loss))
                 print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss))
-        
+
+            if epoch == 1:
+                best_loss = val_loss
+            elif epoch % early_stop_step == 0:
+                if val_loss < best_loss:
+                    best_loss = val_loss
+                    counter = 0
+                else:
+                    counter += 1
+            if counter > 20:
+                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
+                saver.save(sess, ckpt_file)
+                break
+
             if epoch == epochs:
     # Save trained network
-#                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
-#                saver.save(sess, ckpt_file)
-                best_val_losses.append(min(val_losses))
+                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
+                saver.save(sess, ckpt_file)
+#                best_val_losses.append(min(val_losses))
     
     print("Optimization Finished!")
 
 # plot validation loss as a function of the series length    
-fig = plt.figure()
-fig.add_axes([0.2,0.2,0.6,0.6])
-fig.axes[0].plot(best_val_losses)
-fig.text(0.5,0.9,"Validation loss vs series length", weight='bold', verticalalignment='top', horizontalalignment='center', size=14)
-fig.savefig('series_length_ter.jpg')
+#fig = plt.figure()
+#fig.add_axes([0.2,0.2,0.6,0.6])
+#fig.axes[0].plot(best_val_losses)
+#fig.text(0.5,0.9,"Validation loss vs series length", weight='bold', verticalalignment='top', horizontalalignment='center', size=14)
+#fig.savefig('series_length_ter.jpg')
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
