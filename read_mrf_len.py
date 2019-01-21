@@ -22,12 +22,12 @@ mask_path = '../recon_q_examples/data/Exam52004/Series5/mask.dat'
 map_path = '../recon_q_examples/data/Exam52004/Series5/qmaps.dat'
 #data_path = '../recon_q_examples/data/recon_data'
 mrf = read_mrf_data(data_path, 1000, 256)
+series = mrf.reshape((1000, 256**2))
+series /= np.linalg.norm(series, axis=0)
 mask_id = open(mask_path, 'rb')
 map_id = open(map_path, 'rb')
 mask = np.reshape(np.fromfile(mask_id, np.float32), [256,256])
 map = np.reshape(np.fromfile(map_id, np.float32), [256,256,2],order='F')
-series = mrf.reshape((1000, 256**2))
-series /= np.linalg.norm(series, axis=0)
 #series /= np.amax(series, axis=0)
 #series = series[0:400, :]
 times_max = np.array([4., .6])

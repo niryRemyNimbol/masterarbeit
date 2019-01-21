@@ -19,19 +19,19 @@ import dic
 # Training Parameters
 # Training Parameters
 epochs = 10000
-learning_rate = 5.0e-3
-display_step = 200
-early_stop_step = 5
+learning_rate = 1.0e-2
+display_step = 50
+save_step = 5000
 batch_size = 500
 
 # Network Parameters
-num_input = 64 
+num_input = 16
 timesteps = 10 # timesteps
-num_hidden = 8
+num_hidden = 4
 num_output = 2 # number of output parameters
 
 # Fully Connected Layer Parameters
-num_in_fc = 100
+num_in_fc = 26
 
 # tf Graph input
 X = tf.placeholder("float", [None, timesteps, num_in_fc])
@@ -46,11 +46,11 @@ Y = tf.placeholder("float", [None, num_output])
 #}
 
 # Time series and corresponding T1 and T2
-#dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
+#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
+#dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
-
+#D /= np.linalg.norm(D, axis=0)
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val_var_tr', 1000, 10)
 #D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 #D_val /= np.linalg.norm(D_val, axis=0)
@@ -65,7 +65,7 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_real = np.real(D.T[permutation])
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
-#Ten percent gaussian noise data + test different noise levels
+#Ten percent gaussian noise data
 series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 #series_mag /= np.amax(series_mag, axis=0)
@@ -79,7 +79,6 @@ train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size
 train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
 val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc))
 #val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
-#test_set = series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
@@ -92,22 +91,23 @@ val_times = relaxation_times[train_size:train_size+val_size]
 #val_times_max = np.max(val_times, axis=0)
 #val_times /= val_times_max
 
-#from rnn_functions import RNN_with_fc
-from rnn_functions import  RNN_with_tr
+from rnn_functions import RNN_with_fc
 
-#logits = RNN_with_fc(X, num_input, timesteps, num_hidden, num_output)
-logits = RNN_with_tr(X, num_input, timesteps, num_hidden, num_output)
+logits = RNN_with_fc(X, num_input, timesteps, num_hidden, num_output)
 
 # Define loss and optimizer
-loss_ops = [tf.losses.mean_squared_error(Y, logit) for logit in logits]
+loss_op = tf.losses.mean_squared_error(Y, logits)
 #loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
 optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-train_ops = [optimizer.minimize(loss_op) for loss_op in loss_ops]
+train_op = optimizer.minimize(loss_op)
 
 # Evaluate model (with test logits, for dropout to be disabled)
-mse_t1 = [tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logit[:, 0]) for logit in logits]
-mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logit[:, 1]) for logit in logits]
-out = [times_max * logit for logit in logits]
+mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
+mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
+out = times_max * logits
+#mse_t1 = tf.losses.mean_squared_error(labels=Y[:, 0], predictions=logits[:, 0])
+#mse_t2 = tf.losses.mean_squared_error(labels=Y[:, 1], predictions=logits[:, 1])
+#out = logits
 
 # Initialize the variables (i.e. assign their default value)
 init = tf.global_variables_initializer()
@@ -121,21 +121,18 @@ val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 saver = tf.train.Saver()
 
 # Restoration directory
-#ckpt_dir = '../rnn_model/'
 ckpt_dir = 'rnn_model/'
 
 # Start training
 with tf.Session() as sess:
 
-
-# Save# Run the initializer
+# Run the initializer
     sess.run(init)
 
 #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
 #    val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss/', sess.graph)
-
+    
     total_loss = 0
-    counter = 0
     for epoch in range(1, epochs+1):
 #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
 #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
@@ -143,8 +140,8 @@ with tf.Session() as sess:
         for k in range(len(train_set)):
             batch_x = train_set[k]
             batch_y = train_times[k]
-
-            training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
+            
+            training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})        
 # Training, validation and loss computation
 #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
 #                    train_loss_writer.add_summary(summary, step)
@@ -152,7 +149,7 @@ with tf.Session() as sess:
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-        val_loss = sess.run(loss_ops, feed_dict={X: val_set, Y: val_times})
+        val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
 
         # Reshuffling the train set
         permutation = np.random.permutation(D.shape[1])
@@ -164,23 +161,11 @@ with tf.Session() as sess:
         train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 
         if epoch % display_step == 1:
-            print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss[-1]))
-
-        if epoch == 1:
-            best_loss = val_loss[-1]
-        elif epoch % early_stop_step == 0:
-            if val_loss[-1] < best_loss:
-                best_loss = val_loss[-1]
-                counter = 0
-            else:
-                counter += 1
-        if counter > 20:
-            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
-            saver.save(sess, ckpt_file)
-            break
-
-        if epoch  == epochs:
-            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
+            print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss))
+    
+        if epoch % save_step == 0:
+# Save trained network
+            ckpt_file = ckpt_dir + 'model_qti_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
 
 print("Optimization Finished!")
