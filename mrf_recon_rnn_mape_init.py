@@ -18,10 +18,10 @@ import dic
 
 # Training Parameters
 # Training Parameters
-epochs = 1200
+epochs = 5000
 learning_rate = 5.0e-3
-display_step = 20
-save_step = 200
+display_step = 50
+save_step = 500
 batch_size = 500
 
 # Network Parameters
@@ -48,9 +48,9 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 #dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
-D /= np.linalg.norm(D, axis=0)
+#D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
@@ -61,7 +61,9 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag /= np.linalg.norm(series_mag, axis=0)
+series_mag = series_mag.T
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
@@ -108,7 +110,7 @@ val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 saver = tf.train.Saver()
 
 # Restoration directory
-ckpt_dir = '../rnn_model/'
+ckpt_dir = 'rnn_model/'
 
 # Start training
 with tf.Session() as sess:

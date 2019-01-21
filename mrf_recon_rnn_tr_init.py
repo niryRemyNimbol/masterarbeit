@@ -18,9 +18,9 @@ import dic
 
 # Training Parameters
 # Training Parameters
-epochs = 1000
-learning_rate = 5.5e-1
-display_step = 20
+epochs = 5000
+learning_rate = 5.0e-2
+display_step = 200
 early_stop_step = 5
 batch_size = 500
 
@@ -48,7 +48,7 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 #dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_var_tr', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val_var_tr', 1000, 10)
@@ -66,7 +66,7 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data + test different noise levels
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 #series_mag /= np.amax(series_mag, axis=0)
 series_mag = series_mag.T
@@ -75,9 +75,9 @@ series_mag = series_mag.T
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
+val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc))
 #val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
 #test_set = series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F')
 
@@ -157,8 +157,8 @@ with tf.Session() as sess:
         # Reshuffling the train set
         permutation = np.random.permutation(D.shape[1])
         series_mag = series_mag[permutation]
-        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
+        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
         relaxation_times = relaxation_times[permutation]
         train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
         train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
@@ -175,12 +175,12 @@ with tf.Session() as sess:
             else:
                 counter += 1
         if counter > 20:
-            ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
+            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
             break
 
         if epoch  == epochs:
-            ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint{}.ckpt'.format(epoch)
+            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
 
 print("Optimization Finished!")

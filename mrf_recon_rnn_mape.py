@@ -9,6 +9,7 @@ import tensorflow as tf
 #from tensorflow.contrib import rnn
 import numpy as np
 import dic
+import matplotlib.pyplot as plt
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -45,7 +46,7 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_test', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_const_tr_test', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -102,11 +103,11 @@ val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 saver = tf.train.Saver()
 
 # Restoration directory
-ckpt_dir = '../rnn_model/'
+ckpt_dir = '../rnn_model_mape/'
 
 # Start training
 with tf.Session() as sess:
-    ckpt_file = ckpt_dir + 'model_mape_checkpoint1200.ckpt'
+    ckpt_file = ckpt_dir + 'model_mape_checkpoint5000.ckpt'
     saver.restore(sess, ckpt_file)
     
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
@@ -123,6 +124,19 @@ for i in range(len(times)):
 error /= len(times)
 square_error /= len(times)
 rmserror = np.sqrt(square_error)
+
+fig, axs = plt.subplots(2, 1, figsize=(5, 10))
+axs[0].plot(relaxation_times[:, 0], times[:, 0], 'b.')
+axs[0].plot(relaxation_times[:, 0], relaxation_times[:, 0], 'g--')
+axs[0].set_title('T1', weight='bold')
+axs[0].set_ylabel('Predictions')
+axs[0].set_xlabel('Ground truth')
+axs[1].plot(relaxation_times[:, 1], times[:, 1], 'r.')
+axs[1].plot(relaxation_times[:, 1], relaxation_times[:, 1], 'g--')
+axs[1].set_title('T2', weight='bold')
+axs[1].set_ylabel('Predictions')
+axs[1].set_xlabel('Ground truth')
+fig.show()
 
 # Run the initializer
 #    sess.run(init)

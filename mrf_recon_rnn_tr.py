@@ -67,7 +67,8 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
 series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
-series_mag /= np.amax(series_mag, axis=0)
+series_mag /= np.linalg.norm(series_mag, axis=0)
+series_mag = series_mag.T
 #series_mag_val = np.abs(D_val.T + 0.01 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.01 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
@@ -125,7 +126,7 @@ with tf.Session() as sess:
 
 
 # Save trained network
-    ckpt_file = ckpt_dir + 'model_var_tr_checkpoint1000.ckpt'
+    ckpt_file = ckpt_dir + 'model_var_tr_norm_1_checkpoint300.ckpt'
     saver.restore(sess, ckpt_file)
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
                                                          feed_dict={X: test_set,

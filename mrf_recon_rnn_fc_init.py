@@ -18,10 +18,10 @@ import dic
 
 # Training Parameters
 # Training Parameters
-epochs = 1000
-learning_rate = 5.5e-1
-display_step = 20
-save_step = 500
+epochs = 10000
+learning_rate = 1.0e-2
+display_step = 50
+save_step = 5000
 batch_size = 500
 
 # Network Parameters
@@ -47,10 +47,10 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+#dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
-D /= np.linalg.norm(D, axis=0)
+#D /= np.linalg.norm(D, axis=0)
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val_var_tr', 1000, 10)
 #D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 #D_val /= np.linalg.norm(D_val, axis=0)
@@ -66,7 +66,7 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 #series_mag /= np.amax(series_mag, axis=0)
 series_mag = series_mag.T
@@ -75,9 +75,9 @@ series_mag = series_mag.T
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
+val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc))
 #val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
@@ -121,7 +121,7 @@ val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 saver = tf.train.Saver()
 
 # Restoration directory
-ckpt_dir = '../rnn_model/'
+ckpt_dir = 'rnn_model/'
 
 # Start training
 with tf.Session() as sess:
@@ -150,13 +150,13 @@ with tf.Session() as sess:
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
         val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
-        
+
         # Reshuffling the train set
         permutation = np.random.permutation(D.shape[1])
         series_mag = series_mag[permutation]
-        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-        relaxation_times = relaxation_times[permutation]            
+        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
+        relaxation_times = relaxation_times[permutation]
         train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
         train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 
@@ -165,7 +165,7 @@ with tf.Session() as sess:
     
         if epoch % save_step == 0:
 # Save trained network
-            ckpt_file = ckpt_dir + 'model_var_tr_checkpoint{}.ckpt'.format(epoch)
+            ckpt_file = ckpt_dir + 'model_fc_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file)
 
 print("Optimization Finished!")

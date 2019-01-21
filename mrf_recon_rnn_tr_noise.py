@@ -18,7 +18,7 @@ import dic
 
 # Training Parameters
 # Training Parameters
-epochs = 1000
+epochs = 1500
 learning_rate = 5.5e-1
 display_step = 20
 early_stop_step = 5
@@ -126,7 +126,7 @@ init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
+#val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 #merged = tf.summary.merge_all()
 
 # Saver
@@ -139,14 +139,18 @@ ckpt_dir = 'rnn_model/'
 # Start training
 with tf.Session() as sess:
 
-
-# Save# Run the initializer
+# Two additional sessions for the other level of noise
+    sess2 = tf.Session()
+    sess3 = tf.Session()
+# Run the initializer
     sess.run(init)
+    sess2.run(init)
+    sess3.run(init)
 
 #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
 #    val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss/', sess.graph)
 
-    total_loss = 0
+#    total_loss = 0
     counter = 0
     for epoch in range(1, epochs+1):
 #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
@@ -159,8 +163,8 @@ with tf.Session() as sess:
             batch_y = train_times[k]
 
             training_1, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x_1, Y:batch_y})
-            training_5, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x_5, Y:batch_y})
-            training_10, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x_10, Y:batch_y})
+            training_5, batch_loss = sess2.run([train_ops, loss_ops], feed_dict={X: batch_x_5, Y:batch_y})
+            training_10, batch_loss = sess3.run([train_ops, loss_ops], feed_dict={X: batch_x_10, Y:batch_y})
 # Training, validation and loss computation
 #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
 #                    train_loss_writer.add_summary(summary, step)
@@ -169,8 +173,8 @@ with tf.Session() as sess:
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
         val_loss_1 = sess.run(loss_ops, feed_dict={X: val_set_1, Y: val_times})
-        val_loss_5 = sess.run(loss_ops, feed_dict={X: val_set_5, Y: val_times})
-        val_loss_10 = sess.run(loss_ops, feed_dict={X: val_set_10, Y: val_times})
+        val_loss_5 = sess2.run(loss_ops, feed_dict={X: val_set_5, Y: val_times})
+        val_loss_10 = sess3.run(loss_ops, feed_dict={X: val_set_10, Y: val_times})
 
         # Reshuffling the train set
         permutation = np.random.permutation(D.shape[1])
@@ -187,10 +191,10 @@ with tf.Session() as sess:
             print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss_10[-1]))
 
         if epoch == 1:
-            best_loss = val_loss_1[-1]
+            best_loss = val_loss_10[-1]
         elif epoch % early_stop_step == 0:
-            if val_loss_1[-1] < best_loss:
-                best_loss = val_loss_1[-1]
+            if val_loss_10[-1] < best_loss:
+                best_loss = val_loss_10[-1]
                 counter = 0
             else:
                 counter += 1
@@ -199,8 +203,8 @@ with tf.Session() as sess:
             ckpt_file_5 = ckpt_dir + 'model_var_tr_norm_5_checkpoint{}.ckpt'.format(epoch)
             ckpt_file_10 = ckpt_dir + 'model_var_tr_norm_10_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file_1)
-            saver.save(sess, ckpt_file_5)
-            saver.save(sess, ckpt_file_10)
+            saver.save(sess2, ckpt_file_5)
+            saver.save(sess3, ckpt_file_10)
             break
 
         if epoch  == epochs:
@@ -208,8 +212,10 @@ with tf.Session() as sess:
             ckpt_file_5 = ckpt_dir + 'model_var_tr_norm_5_checkpoint{}.ckpt'.format(epoch)
             ckpt_file_10 = ckpt_dir + 'model_var_tr_norm_10_checkpoint{}.ckpt'.format(epoch)
             saver.save(sess, ckpt_file_1)
-            saver.save(sess, ckpt_file_5)
-            saver.save(sess, ckpt_file_10)
+            saver.save(sess2, ckpt_file_5)
+            saver.save(sess3, ckpt_file_10)
+    sess2.close()
+    sess3.close()
 
 print("Optimization Finished!")
 

@@ -9,6 +9,7 @@ import tensorflow as tf
 #from tensorflow.contrib import rnn
 import numpy as np
 import dic
+import matplotlib.pyplot as plt
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -20,7 +21,7 @@ import dic
 epochs = 1000
 learning_rate = 0.5
 display_step = 100
-batch_size = 10000
+batch_size = 10
 
 # Network Parameters
 num_input = 64 
@@ -45,9 +46,9 @@ Y = tf.placeholder("float", [None, num_output])
 
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_test', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_const_tr_test', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
-D /= np.linalg.norm(D, axis=0)
+#D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
@@ -58,12 +59,14 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag /= np.linalg.norm(series_mag, axis=0)
+series_mag = series_mag.T
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 #
-#train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
+#train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
 #train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
 #val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 
@@ -71,8 +74,8 @@ relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :
 times_max = np.max(relaxation_times, axis=0)
 relaxation_times /= times_max
 #
-#train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-#train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
+train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 #val_times = relaxation_times[train_size:train_size+val_size]
 
 from rnn_functions import RNN_with_fc
@@ -109,11 +112,11 @@ ckpt_dir = '../rnn_model/'
 
 # Start training
 with tf.Session() as sess:
-    ckpt_file = ckpt_dir + 'model_fc_checkpoint3000.ckpt'
+    ckpt_file = ckpt_dir + 'model_fc_checkpoint10000.ckpt'
     saver.restore(sess, ckpt_file)
-    
+
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
-                                                         feed_dict={X: series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F'),
+                                                         feed_dict={X: series_mag.reshape((D.shape[1], timesteps, num_in_fc)),
                                                                     Y: relaxation_times})
     error_t1 = np.sqrt(squared_error_t1)
     error_t2 = np.sqrt(squared_error_t2)
@@ -126,6 +129,19 @@ for i in range(len(times)):
 error /= len(times)
 square_error /= len(times)
 rmserror = np.sqrt(square_error)
+
+fig, axs = plt.subplots(2, 1, figsize=(5, 10))
+axs[0].plot(times_max[0]*relaxation_times[:, 0], times[:, 0], 'b.')
+axs[0].plot(times_max[0]*relaxation_times[:, 0], times_max[0]*relaxation_times[:, 0], 'g--')
+axs[0].set_title('T1', weight='bold')
+axs[0].set_ylabel('Predictions')
+axs[0].set_xlabel('Ground truth')
+axs[1].plot(times_max[1]*relaxation_times[:, 1], times[:, 1], 'r.')
+axs[1].plot(times_max[1]*relaxation_times[:, 1], times_max[1]*relaxation_times[:, 1], 'g--')
+axs[1].set_title('T2', weight='bold')
+axs[1].set_ylabel('Predictions')
+axs[1].set_xlabel('Ground truth')
+fig.show()
 
 # Run the initializer
 #    sess.run(init)
