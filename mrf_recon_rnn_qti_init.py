@@ -19,7 +19,7 @@ import dic
 # Training Parameters
 # Training Parameters
 epochs = 10000
-learning_rate = 1.0e-2
+learning_rate = 5.0e-2
 display_step = 50
 save_step = 5000
 batch_size = 500
