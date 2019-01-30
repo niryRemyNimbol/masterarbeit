@@ -9,6 +9,7 @@ import tensorflow as tf
 #from tensorflow.contrib import rnn
 import numpy as np
 import dic
+import os
 import matplotlib.pyplot as plt
 
 ## Parallelism configurations
@@ -19,9 +20,9 @@ import matplotlib.pyplot as plt
 
 # Training Parameters
 epochs = 10000
-learning_rate = 1.0e-2
-display_step = 500
-early_stop_step = 5
+learning_rate = 5.0e-1
+display_step = 200
+early_stop_step = 10
 batch_size = 500
 
 # Network Parameters
@@ -173,27 +174,28 @@ for timestep in range(1, timesteps+1):
                 print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss))
 
             if epoch == 1:
+                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, 0)
+                saver.save(sess, ckpt_file)
                 best_loss = val_loss
             elif epoch % early_stop_step == 0:
                 if val_loss < best_loss:
                     best_loss = val_loss
+                    prev_ckpt = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch-10*(counter+1))
+                    ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
+                    saver.save(sess, ckpt_file)
+                    os.remove(prev_ckpt + '.index')
+                    os.remove(prev_ckpt + '.meta')
+                    os.remove(prev_ckpt + '.data-00000-of-00001')
                     counter = 0
                 else:
                     counter += 1
 #            if counter > 20:
-#                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
-#                saver.save(sess, ckpt_file)
 #                break
 
-            if epoch == epochs:
-    # Save trained network
-                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
-                saver.save(sess, ckpt_file)
-#                best_val_losses.append(min(val_losses))
-    
-    print("Optimization Finished!")
 
-# plot validation loss as a function of the series length    
+    print("Optimization Finished! Best loss: {}".format(best_loss))
+
+# plot validation loss as a function of the series length
 #fig = plt.figure()
 #fig.add_axes([0.2,0.2,0.6,0.6])
 #fig.axes[0].plot(best_val_losses)

@@ -68,7 +68,7 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
 #series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
-series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag = np.abs(D.T[permutation] + 0.05 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.05 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 series_mag = series_mag.T
 #series_mag_val = np.abs(D_val.T + 0.1 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.1 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
