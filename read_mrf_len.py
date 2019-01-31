@@ -73,7 +73,7 @@ for timestep in range(1, timesteps+1):
 
     # Restoration directory
     ckpt_dir = '../rnn_model_len/rnn_model_len{}/'.format(timestep)
-    ckpt_epochs = [9870, 9930, 9730, 9960, 9910, 10000, 9940, 10000, 9970, 9870]#[4875, 895, 3755, 2765, 4130, 4375, 4110, 1935, 2655, 1020]#[4925, 2690, 3995, 3210, 1670, 1100, 980, 985, 560, 655]
+    ckpt_epochs = [9910, 9990, 9950, 9880, 9870, 10000, 9810, 9740, 9820, 9760]
 
     # Start training
     with tf.Session() as sess:

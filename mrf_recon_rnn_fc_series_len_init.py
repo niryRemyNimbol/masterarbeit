@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 # Training Parameters
 epochs = 10000
-learning_rate = 5.0e-1
+learning_rate = 4.0e-1
 display_step = 200
 early_stop_step = 10
 batch_size = 500
@@ -117,8 +117,8 @@ for timestep in range(1, timesteps+1):
     init = tf.global_variables_initializer()
     
     # Summaries to view in tensorboard
-    #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-#    val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
+#    train_loss_summary = tf.summary.scalar('training_loss', loss_op)
+    val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
     #merged = tf.summary.merge_all()
     
     # Saver
@@ -133,8 +133,8 @@ for timestep in range(1, timesteps+1):
     # Run the initializer
         sess.run(init)
     
-    #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-#        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}/'.format(num_in_fc*timestep), sess.graph)
+#        train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
+        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}/'.format(num_in_fc*timestep), sess.graph)
         counter = 0
         for epoch in range(1, epochs+1):
     #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
@@ -144,20 +144,20 @@ for timestep in range(1, timesteps+1):
             for k in range(len(train_set)):
                 batch_x = train_set[k][:,:timestep,:]
                 batch_y = train_times[k]
-                
+
+     #           training, batch_loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
+     #           train_loss_writer.add_summary(summary, step)
                 training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})
                 total_loss += batch_loss
     # Training, validation and loss computation
-    #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
-    #                    train_loss_writer.add_summary(summary, step)
-    
+
     #        # Validation
-    #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
-    #        val_loss_writer.add_summary(val_loss_sum, step)
+#            val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #            val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
 #            val_loss_writer.add_summary(val_summary, epoch)
             total_loss /= len(train_set) 
-            val_loss = sess.run(loss_op, feed_dict={X: val_set[:, :timestep, :], Y: val_times})
+            val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
+            val_loss_writer.add_summary(val_loss_sum, epoch)
 #            val_losses.append(val_loss)
             # Reshuffling the train set
             permutation = np.random.permutation(D.shape[1])
