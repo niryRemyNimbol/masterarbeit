@@ -148,7 +148,7 @@ for timestep in range(1, timesteps+1):
         #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
         #                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
             for k in range(len(train_set)):
-                batch_x = train_set[k]
+                batch_x = train_set[k][:, :timestep, :]
                 batch_y = train_times[k]
 
                 training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
