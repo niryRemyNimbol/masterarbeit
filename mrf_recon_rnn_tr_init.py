@@ -9,6 +9,7 @@ import tensorflow as tf
 #from tensorflow.contrib import rnn
 import numpy as np
 import dic
+import os
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -18,10 +19,10 @@ import dic
 
 # Training Parameters
 # Training Parameters
-epochs = 10000
-learning_rate = 5.0e-3
+epochs = 1000
+learning_rate = 5.0e-1
 display_step = 200
-early_stop_step = 5
+early_stop_step = 10
 batch_size = 500
 
 # Network Parameters
@@ -114,7 +115,7 @@ init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
+val_loss_summary_list = [tf.summary.scalar('validation_loss', loss_op) for loss_op in loss_ops]
 #merged = tf.summary.merge_all()
 
 # Saver
@@ -132,7 +133,7 @@ with tf.Session() as sess:
     sess.run(init)
 
 #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-#    val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss/', sess.graph)
+    val_loss_writer = [tf.summary.FileWriter('tensorboard/validation_loss_cell{}/'.format(n+1), sess.graph) for n in range(len(loss_ops))]
 
     total_loss = 0
     counter = 0
@@ -145,6 +146,8 @@ with tf.Session() as sess:
             batch_y = train_times[k]
 
             training, batch_loss = sess.run([train_ops, loss_ops], feed_dict={X: batch_x, Y:batch_y})
+            total_loss += batch_loss[-1]
+        total_loss /= len(train_set)
 # Training, validation and loss computation
 #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
 #                    train_loss_writer.add_summary(summary, step)
@@ -152,7 +155,9 @@ with tf.Session() as sess:
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-        val_loss = sess.run(loss_ops, feed_dict={X: val_set, Y: val_times})
+        val_loss, summary_list = sess.run([loss_ops, val_loss_summary_list], feed_dict={X: val_set, Y: val_times})
+        for n in range(len(val_loss_summary_list)):
+            val_loss_writer[n].add_summary(summary_list[n], epoch)
 
         # Reshuffling the train set
         permutation = np.random.permutation(D.shape[1])
@@ -164,26 +169,30 @@ with tf.Session() as sess:
         train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 
         if epoch % display_step == 1:
+            print("Epoch " + str(epoch) + ", Training Loss= " + "{:.10f}".format(total_loss))
             print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss[-1]))
 
         if epoch == 1:
+            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(0)
+            saver.save(sess, ckpt_file)
             best_loss = val_loss[-1]
         elif epoch % early_stop_step == 0:
             if val_loss[-1] < best_loss:
                 best_loss = val_loss[-1]
+                prev_ckpt = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch-10*(counter+1))
+                ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
+                saver.save(sess, ckpt_file)
+                os.remove(prev_ckpt + '.index')
+                os.remove(prev_ckpt + '.meta')
+                os.remove(prev_ckpt + '.data-00000-of-00001')
                 counter = 0
             else:
                 counter += 1
-        if counter > 20:
-            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
-            saver.save(sess, ckpt_file)
-            break
+#            if counter > 20:
+#                break
 
-        if epoch  == epochs:
-            ckpt_file = ckpt_dir + 'model_tr_checkpoint{}.ckpt'.format(epoch)
-            saver.save(sess, ckpt_file)
 
-print("Optimization Finished!")
+print("Optimization Finished! Best loss: {}".format(best_loss))
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 

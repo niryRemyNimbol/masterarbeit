@@ -19,7 +19,7 @@ import dic
 # Training Parameters
 # Training Parameters
 epochs = 1000
-learning_rate = 5.5e-1
+learning_rate = 5.0e-1
 display_step = 20
 early_stop_step = 5
 batch_size = 500
@@ -48,7 +48,7 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 #dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_var_tr_test', 1000, 10)
+dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_const_tr_test', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val_var_tr', 1000, 10)
@@ -66,7 +66,7 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 series_mag = series_mag.T
 #series_mag_val = np.abs(D_val.T + 0.01 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.01 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
@@ -78,7 +78,7 @@ series_mag = series_mag.T
 #train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
 #val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
 #val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
-test_set = series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F')
+test_set = series_mag.reshape((D.shape[1], timesteps, num_in_fc))
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 times_max = np.max(relaxation_times, axis=0)
@@ -119,14 +119,14 @@ saver = tf.train.Saver()
 
 # Restoration directory
 #ckpt_dir = '../rnn_model/'
-ckpt_dir = '../rnn_model/'
+ckpt_dir = '../rnn_model_tr/'
 
 # Start training
 with tf.Session() as sess:
 
 
 # Save trained network
-    ckpt_file = ckpt_dir + 'model_var_tr_norm_1_checkpoint300.ckpt'
+    ckpt_file = ckpt_dir + 'model_tr_checkpoint940.ckpt'
     saver.restore(sess, ckpt_file)
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
                                                          feed_dict={X: test_set,

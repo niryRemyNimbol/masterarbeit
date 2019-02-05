@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 
 
 # Training Parameters
-epochs = 10000
-learning_rate = 4.0e-1
+epochs = 1000
+learning_rate = 5.0e-1
 display_step = 200
 early_stop_step = 10
 batch_size = 500

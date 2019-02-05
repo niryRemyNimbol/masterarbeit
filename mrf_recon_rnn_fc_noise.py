@@ -19,8 +19,8 @@ import os
 
 # Training Parameters
 # Training Parameters
-epochs = 10000
-learning_rate = 4.0e-2
+epochs = 1000
+learning_rate = 4.0e-1
 display_step = 50
 early_stop_step = 10
 batch_size = 500
@@ -56,7 +56,6 @@ D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 #dictionary_val = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_val_var_tr', 1000, 10)
 #D_val = dictionary_val.D[:, dictionary_val.lut[0, :]>=dictionary_val.lut[1, :]]
 #D_val /= np.linalg.norm(D_val, axis=0)
-permutation = np.random.permutation(D.shape[1])
 
 #train_size = D.shape[1]
 #val_size = D_val.shape[1]
@@ -64,89 +63,82 @@ train_size = int(np.floor(D.shape[1]*0.8))
 val_size = D.shape[1]-train_size
 batches_per_epoch  = int(np.floor(train_size / batch_size))
 
-#series_real = np.real(D.T[permutation])
-#series_imag = np.imag(D.T[permutation])
-#series_mag = np.abs(D.T[permutation])
-#Ten percent gaussian noise data
-series_mag = [np.abs(D.T[permutation] + 0.01 * noise * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * noise * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T for noise in noise_levels]
-for series in series_mag:
-    series /= np.linalg.norm(series, axis=0)
-    series_mag = series_mag.T
-#series_mag_val = np.abs(D_val.T + 0.01 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.01 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
-#series_phase = np.angle(D.T[permutation])
-#series = np.concatenate([series_mag.T, series_phase.T])
-#series = series.T
 
-train_set = [[series[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)] for series in series_mag]
-for i in range(len(series_mag)):
-    train_set[i].append(series_mag[i][batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
-val_set = [series[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc)) for series in series_mag]
-#val_set = series_mag_val.reshape((val_size, timesteps, num_in_fc), order='F')
 
-relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
-times_max = np.max(relaxation_times, axis=0)
-relaxation_times /= times_max
-
-train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
-val_times = relaxation_times[train_size:train_size+val_size]
 #val_times = dictionary_val.lut[:, dictionary_val.lut[0, :] >= dictionary_val.lut[1, :]][0:2].T
 #val_times_max = np.max(val_times, axis=0)
 #val_times /= val_times_max
 
 from rnn_functions import RNN_with_fc
 
-logits = RNN_with_fc(X, num_input, timesteps, num_hidden, num_output)
+for n in range(len(noise_levels)):
+    with tf.variable_scope('noise{}'.format(noise_levels[n])):
+        permutation = np.random.permutation(D.shape[1])
+        series_mag = np.abs(D.T[permutation] + 0.01 * noise_levels[n] * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * noise_levels[n] * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+        series_mag /= np.linalg.norm(series_mag, axis=0)
+        series_mag = series_mag.T
+        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
+        val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc))
+
+        relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
+        times_max = np.max(relaxation_times, axis=0)
+        relaxation_times /= times_max
+        train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+        train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
+        val_times = relaxation_times[train_size:train_size+val_size]
+
+        logits = RNN_with_fc(X, num_input, timesteps, num_hidden, num_output)
 
 # Define loss and optimizer
-loss_op = tf.losses.mean_squared_error(Y, logits)
-#loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
-optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-train_op = optimizer.minimize(loss_op)
+        loss_op = tf.losses.mean_squared_error(Y, logits)
+#       loss_op = tf.reduce_mean(tf.abs(tf.divide(tf.subtract(Y, logits), Y))) # mean averaged percentage error
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+        train_op = optimizer.minimize(loss_op)
 
 # Evaluate model (with test logits, for dropout to be disabled)
-mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
-mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
-out = times_max * logits
+        mse_t1 = tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logits[:, 0])
+        mse_t2 = tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logits[:, 1])
+        out = times_max * logits
 #mse_t1 = tf.losses.mean_squared_error(labels=Y[:, 0], predictions=logits[:, 0])
 #mse_t2 = tf.losses.mean_squared_error(labels=Y[:, 1], predictions=logits[:, 1])
 #out = logits
 
-for n in range(len(noise_levels)):
+
 # Initialize the variables (i.e. assign their default value)
-    init = tf.global_variables_initializer()
+        init = tf.global_variables_initializer()
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-    val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
+        val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 #merged = tf.summary.merge_all()
 
 # Saver
-    saver = tf.train.Saver()
+        saver = tf.train.Saver()
 
 # Restoration directory
-    ckpt_dir = 'rnn_model/'
+        ckpt_dir = 'rnn_model/'
 
 # Start training
-    with tf.Session() as sess:
+        with tf.Session() as sess:
 
 # Run the initializer
-        sess.run(init)
+            sess.run(init)
 
-        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_noise{}/'.format(noise_levels[n]), sess.graph)
-        counter = 0
-        total_loss = 0
-        for epoch in range(1, epochs+1):
+            val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_noise{}/'.format(noise_levels[n]), sess.graph)
+            counter = 0
+            total_loss = 0
+            for epoch in range(1, epochs+1):
 #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
 #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
 #                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-            for k in range(len(train_set)):
-                batch_x = train_set[k]
-                batch_y = train_times[k]
-            
-                training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})
-                total_loss += batch_loss
-            total_loss /= len(train_set)
+                for k in range(len(train_set)):
+                    batch_x = train_set[k]
+                    batch_y = train_times[k]
+
+                    training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})
+                    total_loss += batch_loss
+                total_loss /= len(train_set)
 # Training, validation and loss computation
 #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
 #                    train_loss_writer.add_summary(summary, step)
@@ -154,44 +146,44 @@ for n in range(len(noise_levels)):
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-            val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
-            val_loss_writer.add_summary(val_loss_sum, epoch)
+                val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
+                val_loss_writer.add_summary(val_loss_sum, epoch)
 
         # Reshuffling the train set
-            permutation = np.random.permutation(D.shape[1])
-            series_mag = series_mag[permutation]
-            train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
-            train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
-            relaxation_times = relaxation_times[permutation]
-            train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-            train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
+                permutation = np.random.permutation(D.shape[1])
+                series_mag = series_mag[permutation]
+                train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+                train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
+                relaxation_times = relaxation_times[permutation]
+                train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
+                train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
 
-        if epoch % display_step == 1:
-            print("Epoch " + str(epoch) + ", average training loss= " + "{:.10f}".format(total_loss))
-            print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss))
+                if epoch % display_step == 1:
+                    print("Epoch " + str(epoch) + ", average training loss= " + "{:.10f}".format(total_loss))
+                    print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss))
 
 
-        if epoch == 1:
-            ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, 0)
-            saver.save(sess, ckpt_file)
-            best_loss = val_loss
-        elif epoch % early_stop_step == 0:
-            if val_loss < best_loss:
-                best_loss = val_loss
-                prev_ckpt = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch-10*(counter+1))
-                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
-                saver.save(sess, ckpt_file)
-                os.remove(prev_ckpt + '.index')
-                os.remove(prev_ckpt + '.meta')
-                os.remove(prev_ckpt + '.data-00000-of-00001')
-                counter = 0
-            else:
-                counter += 1
+                if epoch == 1:
+                    ckpt_file = ckpt_dir + 'model_fc_noise{}_checkpoint{}.ckpt'.format(noise_levels[n], 0)
+                    saver.save(sess, ckpt_file)
+                    best_loss = val_loss
+                elif epoch % early_stop_step == 0:
+                    if val_loss < best_loss:
+                        best_loss = val_loss
+                        prev_ckpt = ckpt_dir + 'model_fc_noise{}_checkpoint{}.ckpt'.format(noise_levels[n], epoch-10*(counter+1))
+                        ckpt_file = ckpt_dir + 'model_fc_noise{}_checkpoint{}.ckpt'.format(noise_levels[n], epoch)
+                        saver.save(sess, ckpt_file)
+                        os.remove(prev_ckpt + '.index')
+                        os.remove(prev_ckpt + '.meta')
+                        os.remove(prev_ckpt + '.data-00000-of-00001')
+                        counter = 0
+                    else:
+                        counter += 1
 #            if counter > 20:
 #                break
 
 
-        print("Optimization Finished! Best loss: {}".format(best_loss))
+            print("Optimization Finished! Best loss: {}".format(best_loss))
 
 
 #     Calculate MSE for test time series

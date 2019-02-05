@@ -17,10 +17,10 @@ def read_mrf_data(data_path, Nreps, dim):
 
     return data_mag
 
-data_path = '../recon_q_examples/data/Exam52004/Series5/recon_data'
-mask_path = '../recon_q_examples/data/Exam52004/Series5/mask.dat'
-map_path = '../recon_q_examples/data/Exam52004/Series5/qmaps.dat'
-dl_path = '../recon_q_examples/data/Exam52004/Series5/dl_qmaps.dat'
+data_path = '../recon_q_examples/data/Exam52006/Series5/recon_data'
+mask_path = '../recon_q_examples/data/Exam52006/Series5/mask.dat'
+map_path = '../recon_q_examples/data/Exam52006/Series5/qmaps.dat'
+dl_path = '../recon_q_examples/data/Exam52006/Series5/dl_qmaps.dat'
 #data_path = '../recon_q_examples/data/recon_data'
 mrf = read_mrf_data(data_path, 1000, 256)
 series = mrf.reshape((1000, 256**2))
@@ -72,8 +72,8 @@ for timestep in range(1, timesteps+1):
     saver = tf.train.Saver()
 
     # Restoration directory
-    ckpt_dir = '../rnn_model_len/rnn_model_len{}/'.format(timestep)
-    ckpt_epochs = [9910, 9990, 9950, 9880, 9870, 10000, 9810, 9740, 9820, 9760]
+    ckpt_dir = '../rnn_model_len_new/rnn_model_len{}/'.format(timestep)
+    ckpt_epochs = [970, 970, 980, 990, 920, 990, 980, 900, 970, 990]#[9910, 9990, 9950, 9880, 9870, 10000, 9810, 9740, 9820, 9760]
 
     # Start training
     with tf.Session() as sess:
@@ -113,79 +113,78 @@ imgs = [time.reshape((256,256,2), order='C') for time in times]
 
 fig, axs = plt.subplots(4, 12, figsize=(60,20))
 
-label = 1
-aprev = 10
-true_t1 = np.array([604, 596,1448, 1262, 444, 754, 903, 1276, 1034, 745, 1160, 966])
-true_t1_std = 0.03 * true_t1
-true_t2 = np.array([95, 136, 390, 184, 154, 116, 137, 204, 167, 157, 214, 224])
-true_t2_std = 0.03 * true_t2
-data_t1 = []
-data_t1_std = []
-data_t2 = []
-data_t2_std = []
-img_gt = np.zeros_like(map)
-angles = [(k,l) for k in range(0,221,2) for l in range(0,221,2)]
-for k, l in angles:
-    if mask[k:k + 36, l].sum() == 0 and mask[k:k + 36, l + 35].sum() == 0 and mask[k, l:l + 36].sum() == 0 and mask[k + 35, l:l + 36].sum() == 0 and mask[k:k + 36, l:l + 36].sum() > 0:
-        a = np.mean(mask[k:k + 36, l:l + 36] * imgs[9][k:k + 36, l:l + 36, 1], axis=(0, 1))
-        if np.abs(a - aprev) > 1e-4:
+#label = 1
+#aprev = 10
+#true_t1 = np.array([604, 596,1448, 1262, 444, 754, 903, 1276, 1034, 745, 1160, 966])
+#true_t1_std = 0.03 * true_t1
+#true_t2 = np.array([95, 136, 390, 184, 154, 116, 137, 204, 167, 157, 214, 224])
+#true_t2_std = 0.03 * true_t2
+#data_t1 = []
+#data_t1_std = []
+#data_t2 = []
+#data_t2_std = []
+#img_gt = np.zeros_like(map)
+#angles = [(k,l) for k in range(0,221,2) for l in range(0,221,2)]
+#for k, l in angles:
+#    if mask[k:k + 36, l].sum() == 0 and mask[k:k + 36, l + 35].sum() == 0 and mask[k, l:l + 36].sum() == 0 and mask[k + 35, l:l + 36].sum() == 0 and mask[k:k + 36, l:l + 36].sum() > 0:
+#        a = np.mean(mask[k:k + 36, l:l + 36] * imgs[9][k:k + 36, l:l + 36, 1], axis=(0, 1))
+#        if np.abs(a - aprev) > 1e-4:
             #            axs[m, n].imshow(mask[k:k + 36, l:l + 36] * imgs[k:k + 36, l:l + 36, 0], cmap='hot', origin='lower', vmin=0,
             #                             vmax=3.0)
-            y_t1_std = []
-            y_t1_mean = []
-            y_t2_std = []
-            y_t2_mean = []
-            for n in range(len(imgs)):
-                axs[0, n].annotate('{}'.format(label), (l, k), color='y')
-                axs[0, n].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
-                axs[0, n].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
-                axs[2, n].annotate('{}'.format(label), (l, k), color='r')
-                axs[2, n].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
-                axs[2, n].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
-                tube_t1 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 0] * 1e3
-                tube_t2 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 1] * 1e3
-                y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
-                y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
-                y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
-                y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
+#            y_t1_std = []
+#            y_t1_mean = []
+#            y_t2_std = []
+#            y_t2_mean = []
+#            for n in range(len(imgs)):
+#                axs[0, n].annotate('{}'.format(label), (l, k), color='y')
+#                axs[0, n].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
+#                axs[0, n].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
+#                axs[2, n].annotate('{}'.format(label), (l, k), color='r')
+#                axs[2, n].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
+#                axs[2, n].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
+#                tube_t1 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 0] * 1e3
+#                tube_t2 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 1] * 1e3
+#                y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
+#                y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
+#                y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
+#                y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
 #                print(np.mean(tube_t2[tube_t2 > 0].flatten()), n, true_t2[label-1])
-            axs[0, 10].annotate('{}'.format(label), (l, k), color='y')
-            axs[0, 10].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
-            axs[0, 10].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
-            axs[2, 10].annotate('{}'.format(label), (l, k), color='r')
-            axs[2, 10].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
-            axs[2, 10].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
-            tube_t1 = map[-k:-k-36:-1, l:l+36, 0] * 1e3
-            tube_t2 = map[-k:-k-36:-1, l:l+36, 1] * 1e3
-            y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
-            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
-            y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
-            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
-            ind = np.where(tube_t1 > 0)
-            offset = [k * np.ones_like(ind[0]), l * np.ones_like(ind[1])]
-            img_gt[ind[0] + offset[0], ind[1] + offset[1], :] = np.array([true_t1[label-1], true_t2[label-1]])
-            axs[0, 11].annotate('{}'.format(label), (l, k), color='y')
-            axs[0, 11].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
-            axs[0, 11].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
-            axs[2, 11].annotate('{}'.format(label), (l, k), color='r')
-            axs[2, 11].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
-            axs[2, 11].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
-            tube_t1 = mask[k:k+36, l:l+36] * dl_map[:, :, 0].T[k:k+36, l:l+36] * 1e3
-            tube_t2 = mask[k:k+36, l:l+36] * dl_map[:, :, 1].T[k:k+36, l:l+36] * 1e3
-            y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
-            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
-            y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
-            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
-            aprev = a
-            data_t1.append(y_t1_mean)
-            data_t1_std.append(y_t1_std)
-            data_t2.append(y_t2_mean)
-            data_t2_std.append(y_t2_std)
-            label += 1
-data_t1 = np.array(data_t1)
-data_t2 = np.array(data_t2)
-data_t1_std = np.array(data_t1_std)
-data_t2_std = np.array(data_t2_std)
+#            axs[0, 10].annotate('{}'.format(label), (l, k), color='y')
+#            axs[0, 10].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
+#            axs[0, 10].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
+#            axs[2, 10].annotate('{}'.format(label), (l, k), color='r')
+#            axs[2, 10].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
+#            axs[2, 10].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
+#            tube_t1 = map[-k:-k-36:-1, l:l+36, 0] * 1e3
+#            tube_t2 = map[-k:-k-36:-1, l:l+36, 1] * 1e3
+#            y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
+#            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
+#            y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
+#            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
+#            ind = np.where(tube_t1 > 0)
+#            offset = [k * np.ones_like(ind[0]), l * np.ones_like(ind[1])]
+#            img_gt[ind[0] + offset[0], ind[1] + offset[1], :] = np.array([true_t1[label-1], true_t2[label-1]])
+#            axs[0, 11].annotate('{}'.format(label), (l, k), color='y')
+#            axs[0, 11].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
+#            axs[0, 11].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
+#            axs[2, 11].annotate('{}'.format(label), (l, k), color='r')
+#            axs[2, 11].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
+#            axs[2, 11].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
+#            tube_t1 = mask[k:k+36, l:l+36] * dl_map[:, :, 0].T[k:k+36, l:l+36] * 1e3
+#            tube_t2 = mask[k:k+36, l:l+36] * dl_map[:, :, 1].T[k:k+36, l:l+36] * 1e3
+#            y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
+#            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
+#            y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
+#            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
+#            aprev = a
+#            data_t1.append(y_t1_mean)
+#            data_t1_std.append(y_t1_std)
+#            data_t2.append(y_t2_mean)
+#            data_t2_std.append(y_t2_std)
+#            label += 1 data_t1 = np.array(data_t1)
+#data_t2 = np.array(data_t2)
+#data_t1_std = np.array(data_t1_std)
+#data_t2_std = np.array(data_t2_std)
 
 for k in range(len(imgs)):
     t1_pred = axs[0, k].imshow(mask * imgs[k][:, :, 0] * 1e3, cmap='hot', origin='lower', vmin=0, vmax=3000)
@@ -201,12 +200,12 @@ for k in range(len(imgs)):
 #    c = ((mask * dl_map[:, :, 0].T)[0:-1:10, ::10] * 1e3).flatten()
 #    axs[1, k].plot(b, a, '.b')
 #    axs[1, k].plot(c, a, '*r')
-#    scdm = axs[1, k].scatter(map[-1:0:-1, :, 0] * 1e3 , mask[0:-1, :] * imgs[k][0:-1, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
-#    scnet = axs[1, k].scatter(mask[:, :] * dl_map[:, :, 0].T * 1e3, mask[:, :] * imgs[k][:, :, 0] * 1e3, c='r', marker='.', alpha=0.1)
-    scdm = axs[1, k].scatter(img_gt[:, :, 0], mask[:, :] * imgs[k][:, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
-    scnet = axs[1, k].scatter(img_gt[:, :, 0], mask[:, :] * dl_map[:, :, 0].T * 1e3, c='r', marker='.', alpha=0.1)
+    scdm = axs[1, k].scatter(map[-1:0:-1, :, 0] * 1e3 , mask[0:-1, :] * imgs[k][0:-1, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
+    scnet = axs[1, k].scatter(mask[:, :] * dl_map[:, :, 0].T * 1e3, mask[:, :] * imgs[k][:, :, 0] * 1e3, c='r', marker='.', alpha=0.1)
+#    scdm = axs[1, k].scatter(img_gt[:, :, 0], mask[:, :] * imgs[k][:, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
+#    scnet = axs[1, k].scatter(img_gt[:, :, 0], mask[:, :] * dl_map[:, :, 0].T * 1e3, c='r', marker='.', alpha=0.1)
     axs[1, k].plot([x for x in range(4000)], [x for x in range(4000)], '--g')
-    axs[1, k].plot(true_t1, data_t1[:, k], '*y')
+  #  axs[1, k].plot(true_t1, data_t1[:, k], '*y')
     axs[1, k].set_title('{}-cell LSTM, T1 scatter plot'.format(k+1), weight='bold')
     axs[1, k].set_xlabel('Dictionary matching / MRF net (ms)')
     axs[1, k].set_xbound(lower=0, upper=4000)
@@ -218,12 +217,12 @@ for k in range(len(imgs)):
 #    c = ((mask * dl_map[:, :, 1].T)[0:-1:10, ::10] * 1e3).flatten()
 #    axs[3, k].plot(b, a, '.b')
 #    axs[3, k].plot(c, a, '*r')
-#    scdm = axs[3, k].scatter(map[-1:0:-1, :, 1] * 1e3 , mask[0:-1, :] * imgs[k][0:-1, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
-#    scnet = axs[3, k].scatter(mask[:, :] * dl_map[:, :, 1].T * 1e3, mask[:, :] * imgs[k][:, :, 1] * 1e3, c='r', marker='.', alpha=0.1)
-    scdm = axs[3, k].scatter(img_gt[:, :, 1], mask[:, :] * imgs[k][:, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
-    scnet = axs[3, k].scatter(img_gt[:, :, 1], mask[:, :] * dl_map[:, :, 1].T * 1e3, c='r', marker='.', alpha=0.1)
+    scdm = axs[3, k].scatter(map[-1:0:-1, :, 1] * 1e3 , mask[0:-1, :] * imgs[k][0:-1, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
+    scnet = axs[3, k].scatter(mask[:, :] * dl_map[:, :, 1].T * 1e3, mask[:, :] * imgs[k][:, :, 1] * 1e3, c='r', marker='.', alpha=0.1)
+#    scdm = axs[3, k].scatter(img_gt[:, :, 1], mask[:, :] * imgs[k][:, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
+#    scnet = axs[3, k].scatter(img_gt[:, :, 1], mask[:, :] * dl_map[:, :, 1].T * 1e3, c='r', marker='.', alpha=0.1)
     axs[3, k].plot([x for x in range(600)], [x for x in range(600)], '--g')
-    axs[3, k].plot(true_t2, data_t2[:, k], '*y')
+  #  axs[3, k].plot(true_t2, data_t2[:, k], '*y')
     axs[3, k].set_title('{}-cell LSTM, T2 scatter plot'.format(k+1), weight='bold')
     axs[3, k].set_xlabel('Dictionary matching / MRF net (ms)')
     axs[3, k].set_xbound(lower=0, upper=600)
@@ -263,10 +262,10 @@ fig.colorbar(t2_DL, ax=axs[2, 11])
 #m = 0
 #n = 0
 
-gt1 = np.repeat(true_t1, data_t1.shape[1]).reshape(data_t1.T.shape)
-gt2 = np.repeat(true_t2, data_t2.shape[1]).reshape(data_t2.T.shape)
-error_t1 = np.abs(data_t1 - gt1) / gt1
-error_t2 = np.abs(data_t2 - gt2) / gt2
+#gt1 = np.repeat(true_t1, data_t1.shape[1]).reshape(data_t1.T.shape)
+#gt2 = np.repeat(true_t2, data_t2.shape[1]).reshape(data_t2.T.shape)
+#error_t1 = np.abs(data_t1 - gt1) / gt1
+#error_t2 = np.abs(data_t2 - gt2) / gt2
 #error_t1 = np.sqrt((data_t1 - gt1) ** 2)
 #error_t2 = np.sqrt((data_t2 - gt2) ** 2)
 #lines = ['Tube {}'.format(k) for k in range(1, data_t1.shape[1]+1, 1)]
@@ -320,15 +319,15 @@ error_t2 = np.abs(data_t2 - gt2) / gt2
 #                m += 1
 fig.show()
 
-fig2, axs2 = plt.subplots(1, 2, figsize=(10, 5))
-axs2[0].plot(np.mean(error_t1[:, 0:10], axis=0), '*')
-axs2[0].plot(np.repeat(np.mean(error_t1[:, 10]), 10), '-')
-axs2[0].plot(np.repeat(np.mean(error_t1[:, 11]), 10), '-')
-axs2[0].set_title('T1 percentage error vs network length', weight='bold')
-axs2[0].legend(('LSTM RNN', 'DM', 'MRF net'))
-axs2[1].plot(np.mean(error_t2[:, 0:10], axis=0), '*')
-axs2[1].plot(np.repeat(np.mean(error_t2[:, 10]), 10), '-')
-axs2[1].plot(np.repeat(np.mean(error_t2[:, 11]), 10), '-')
-axs2[1].set_title('T2 percentage error vs network length', weight='bold')
-axs2[1].legend(('LSTM RNN', 'DM', 'MRF net'))
-fig2.show()
+#fig2, axs2 = plt.subplots(1, 2, figsize=(10, 5))
+#axs2[0].plot(np.mean(error_t1[:, 0:10], axis=0), '*')
+#axs2[0].plot(np.repeat(np.mean(error_t1[:, 10]), 10), '-')
+#axs2[0].plot(np.repeat(np.mean(error_t1[:, 11]), 10), '-')
+#axs2[0].set_title('T1 percentage error vs network length', weight='bold')
+#axs2[0].legend(('LSTM RNN', 'DM', 'MRF net'))
+#axs2[1].plot(np.mean(error_t2[:, 0:10], axis=0), '*')
+#axs2[1].plot(np.repeat(np.mean(error_t2[:, 10]), 10), '-')
+#axs2[1].plot(np.repeat(np.mean(error_t2[:, 11]), 10), '-')
+#axs2[1].set_title('T2 percentage error vs network length', weight='bold')
+#axs2[1].legend(('LSTM RNN', 'DM', 'MRF net'))
+#fig2.show()

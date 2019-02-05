@@ -69,7 +69,7 @@ ckpt_dir = '../rnn_model_tr/'
 with tf.Session() as sess:
 #    ckpt_file = ckpt_dir + 'model_fc_len1000_checkpoint855.ckpt'
 #    ckpt_file = ckpt_dir + 'model_var_tr_norm_10_checkpoint300.ckpt'
-    ckpt_file = ckpt_dir + 'model_tr_checkpoint10000.ckpt'
+    ckpt_file = ckpt_dir + 'model_tr_checkpoint940.ckpt'
 #    ckpt_file = ckpt_dir + 'model_var_tr_norm_checkpoint1000.ckpt'
     saver.restore(sess, ckpt_file)
 
