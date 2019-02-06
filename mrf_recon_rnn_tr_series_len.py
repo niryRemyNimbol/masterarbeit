@@ -129,7 +129,7 @@ for timestep in range(1, timesteps+1):
     saver = tf.train.Saver()
     
     # Restoration directory
-    ckpt_dir = 'rnn_model/'
+    ckpt_dir = 'rnn_model/model_tr_len{}/'.format(timestep)
     
     # Start training
     with tf.Session() as sess:
@@ -161,7 +161,7 @@ for timestep in range(1, timesteps+1):
         #        # Validation
         #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
         #        val_loss_writer.add_summary(val_loss_sum, step)
-            val_loss, summary_list = sess.run([loss_ops, val_loss_summary_list], feed_dict={X: val_set, Y: val_times})
+            val_loss, summary_list = sess.run([loss_ops, val_loss_summary_list], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
             for n in range(len(val_loss_summary_list)):
                 val_loss_writer[n].add_summary(summary_list[n], epoch)
 
@@ -179,14 +179,14 @@ for timestep in range(1, timesteps+1):
                 print("Epoch " + str(epoch) + ", Validation Loss= " + "{:.10f}".format(val_loss[-1]))
 
             if epoch == 1:
-                ckpt_file = ckpt_dir + 'model_tr_len{}_checkpoint{}.ckpt'.format(timestep, 0)
+                ckpt_file = ckpt_dir + 'model_tr_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, 0)
                 saver.save(sess, ckpt_file)
                 best_loss = val_loss[-1]
             elif epoch % early_stop_step == 0:
                 if val_loss[-1] < best_loss:
                     best_loss = val_loss[-1]
-                    prev_ckpt = ckpt_dir + 'model_tr_len{}_checkpoint{}.ckpt'.format(timestep, epoch-10*(counter+1))
-                    ckpt_file = ckpt_dir + 'model_tr_len{}_checkpoint{}.ckpt'.format(timestep, epoch)
+                    prev_ckpt = ckpt_dir + 'model_tr_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch-10*(counter+1))
+                    ckpt_file = ckpt_dir + 'model_tr_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
                     saver.save(sess, ckpt_file)
                     os.remove(prev_ckpt + '.index')
                     os.remove(prev_ckpt + '.meta')
