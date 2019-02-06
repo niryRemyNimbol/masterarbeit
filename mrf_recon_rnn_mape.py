@@ -48,7 +48,7 @@ Y = tf.placeholder("float", [None, num_output])
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf_const_tr_test', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
-D /= np.linalg.norm(D, axis=0)
+#D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
 
 train_size = int(np.floor(D.shape[1]*0.8))
@@ -59,7 +59,9 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag /= np.linalg.norm(series_mag, axis=0)
+series_mag = series_mag.T
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
@@ -107,11 +109,11 @@ ckpt_dir = '../rnn_model_mape/'
 
 # Start training
 with tf.Session() as sess:
-    ckpt_file = ckpt_dir + 'model_mape_checkpoint5000.ckpt'
+    ckpt_file = ckpt_dir + 'model_mape_checkpoint880.ckpt'
     saver.restore(sess, ckpt_file)
     
     times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
-                                                         feed_dict={X: series_mag.reshape((D.shape[1], timesteps, num_in_fc), order='F'),
+                                                         feed_dict={X: series_mag.reshape((D.shape[1], timesteps, num_in_fc)),
                                                                     Y: relaxation_times})
     error_t1 = np.sqrt(squared_error_t1)
     error_t2 = np.sqrt(squared_error_t2)

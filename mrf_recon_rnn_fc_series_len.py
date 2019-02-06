@@ -152,6 +152,13 @@ for timestep in range(1, timesteps+1):
     square_error /= len(times)
     rmserror = np.sqrt(square_error)
 
+t_loss = []
+
+for e in tf.train.summary_iterator('.../train_loss_summary/events.out.tfevents.1537905112.b07a413e0312'):
+    for t in e.summary.value:
+        if t.tag == 'training_loss':
+            t_loss.append(t.simple_value)
+
 fig, axs = plt.subplots(2, 10, figsize=(50, 10))
 for  k in range(len(times)):
     axs[0, k].plot(times_max[0]*relaxation_times[:, 0]*1e3, times[k][:, 0]*1e3, 'b.')
