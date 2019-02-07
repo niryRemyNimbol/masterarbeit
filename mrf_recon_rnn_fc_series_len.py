@@ -9,6 +9,7 @@ import tensorflow as tf
 #from tensorflow.contrib import rnn
 import numpy as np
 import dic
+import os
 import matplotlib.pyplot as plt
 
 ## Parallelism configurations
@@ -68,7 +69,7 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
 #series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
-series_mag = np.abs(D.T[permutation] + 0.05 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.05 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag = np.abs(D.T[permutation] + 0.1 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.1 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 series_mag = series_mag.T
 #series_mag_val = np.abs(D_val.T + 0.1 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.1 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
@@ -98,6 +99,8 @@ from rnn_functions import RNN_with_fc
 #val_losses = []
 #best_val_losses = []
 times = []
+errors_t1 = []
+errors_t2 = []
 for timestep in range(1, timesteps+1):
     X = tf.placeholder("float", [None, timestep, num_in_fc])
     logits = RNN_with_fc(X, num_input, timestep, num_hidden, num_output)
@@ -125,14 +128,15 @@ for timestep in range(1, timesteps+1):
     saver = tf.train.Saver()
     
     # Restoration directory
-    ckpt_dir = '../rnn_model_len/rnn_model_len{}/'.format(timestep)
+    ckpt_dir = '../rnn_model_len_new/rnn_model_len{}/'.format(timestep)
+    ckpt_epochs = [970, 970, 980, 990, 920, 990, 980, 900, 970, 990]
     
     # Start training
     with tf.Session() as sess:
     
     # Run the initializer
     #    sess.run(init)
-        ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint5000.ckpt'.format(timestep*num_in_fc)
+        ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, ckpt_epochs[timestep-1])
         saver.restore(sess, ckpt_file)
 
 
@@ -142,22 +146,30 @@ for timestep in range(1, timesteps+1):
         error_t1 = np.sqrt(squared_error_t1)
         error_t2 = np.sqrt(squared_error_t2)
         times.append(time)
+        errors_t1.append(error_t1)
+        errors_t2.append(error_t2)
 
-    error = 0
-    square_error = 0
-    for i in range(len(times)):
-        error += np.abs(times[i]-relaxation_times[i]*times_max)
-        square_error += (times[i]-relaxation_times[i]*times_max)**2
-    error /= len(times)
-    square_error /= len(times)
-    rmserror = np.sqrt(square_error)
 
-t_loss = []
+v_loss_len = []
+best_v = []
+sum_dir = ['../tensorboard_len_new/' + dir for dir in os.listdir('../tensorboard_len_new')]
+sum_dir.sort(reverse=True)
+s100 = sum_dir.pop()
+s1000 = sum_dir.pop()
+sum_dir.append(s100)
+sum_dir.sort()
+sum_dir.append(s1000)
 
-for e in tf.train.summary_iterator('.../train_loss_summary/events.out.tfevents.1537905112.b07a413e0312'):
-    for t in e.summary.value:
-        if t.tag == 'training_loss':
-            t_loss.append(t.simple_value)
+for path in sum_dir:
+    file_list = os.listdir(path)
+    v_loss = []
+    for e in tf.train.summary_iterator(path + '/' + file_list[0]):
+        for v in e.summary.value:
+            if v.tag.find('validation_loss') >= 0:
+                v_loss.append(v.simple_value)
+    v_loss_len.append(v_loss)
+    best_v.append(min(v_loss))
+v_loss_len = np.array(v_loss_len)
 
 fig, axs = plt.subplots(2, 10, figsize=(50, 10))
 for  k in range(len(times)):
@@ -173,73 +185,27 @@ for  k in range(len(times)):
     axs[1, k].set_xlabel('Ground truth (ms)')
 fig.show()
 
-    #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss/', sess.graph)
-#        val_loss_writer = tf.summary.FileWriter('tensorboard/validation_loss_len{}/'.format(num_in_fc*timestep), sess.graph)
-    #    counter = 0
-    #    for epoch in range(1, epochs+1):
-    #                    batch_x = series_mag[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-    #                    batch_x = batch_x.reshape((batch_x.shape[0], timesteps, num_input), order='F')
-    #                    batch_y = relaxation_times[(step-1)%32 * batch_size:min(((step-1)%32+1) * batch_size, series_mag.shape[0])]
-    #        total_loss = 0
-    #        for k in range(len(train_set)):
-    #            batch_x = train_set[k][:,:timestep,:]
-    #            batch_y = train_times[k]
-                
-    #            training, batch_loss = sess.run([train_op, loss_op], feed_dict={X: batch_x, Y:batch_y})
-    #            total_loss += batch_loss
-    # Training, validation and loss computation
-    #                    training, loss, summary = sess.run([train_op, loss_op, train_loss_summary], feed_dict={X: batch_x, Y: batch_y})
-    #                    train_loss_writer.add_summary(summary, step)
-    
-    #        # Validation
-    #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
-    #        val_loss_writer.add_summary(val_loss_sum, step)
-#            val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set[:, :timestep, :], Y: val_times})
-#            val_loss_writer.add_summary(val_summary, epoch)
-    #        total_loss /= len(train_set)
-    #        val_loss = sess.run(loss_op, feed_dict={X: val_set[:, :timestep, :], Y: val_times})
-#            val_losses.append(val_loss)
-            # Reshuffling the train set
-    #        permutation = np.random.permutation(D.shape[1])
-    #        series_mag = series_mag[permutation]
-    #        train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
-    #        train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
-    #        relaxation_times = relaxation_times[permutation]
-    #        train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
-    #        train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])
+# plot validation loss as a function of the series length
+x = [n for n in range(1, 11)]
+x2 = [n for n in range(1, 1001)]
+fig2, axs2 = plt.subplots(4, 1, figsize=(5, 20))
+axs2[0].plot(x, best_v, '.')
+axs2[0].set_title('Validatiton loss vs series length', weight='bold')
+axs2[0].set_xlabel('# time steps')
+axs2[0].set_ylabel('Best validation loss')
+axs2[1].plot(x, errors_t1 * 1e3, '.')
+axs2[1].set_title('T1 RMSE vs series length', weight='bold')
+axs2[1].set_xlabel('# time step')
+axs2[1].set_ylabel('RMSE (ms)')
+axs2[2].plot(x, errors_t2 * 1e3, '.')
+axs2[2].set_title('T2 RMSE vs series length', weight='bold')
+axs2[2].set_xlabel('# time step')
+axs2[2].set_ylabel('RMSE (ms)')
+axs2[3].plot(x2, v_loss_len.T)
+axs2[3].set_xlabel('Epoch')
+axs2[3].set_ylabel('Validation loss')
+fig2.show()
 
-
-    #        if epoch % display_step == 1:
-    #            print("Epoch " + str(epoch) + ", average training loss= " + "{:.10f}".format(total_loss))
-    #            print("Epoch " + str(epoch) + ", validation loss= " + "{:.10f}".format(val_loss))
-
-    #        if epoch == 1:
-    #            best_loss = val_loss
-    #        elif epoch % early_stop_step == 0:
-    #            if val_loss < best_loss:
-    #                best_loss = val_loss
-    #                counter = 0
-    #            else:
-    #                counter += 1
-#            if counter > 20:
-#                ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
-#                saver.save(sess, ckpt_file)
-#                break
-
-    #        if epoch == epochs:
-    # Save trained network
-    #            ckpt_file = ckpt_dir + 'model_fc_len{}_checkpoint{}.ckpt'.format(timestep*num_in_fc, epoch)
-    #            saver.save(sess, ckpt_file)
-    #            best_val_losses.append(min(val_losses))
-    
-#    print("Optimization Finished!")
-
-# plot validation loss as a function of the series length    
-#fig = plt.figure()
-#fig.add_axes([0.2,0.2,0.6,0.6])
-#fig.axes[0].plot(best_val_losses)
-#fig.text(0.5,0.9,"Validation loss vs series length", weight='bold', verticalalignment='top', horizontalalignment='center', size=14)
-#fig.savefig('series_length_ter.jpg')
 
 #     Calculate MSE for test time series
 #    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 

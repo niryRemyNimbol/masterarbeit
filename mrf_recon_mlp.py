@@ -10,7 +10,7 @@ import numpy as np
 import dic
 
 # Parameters
-learning_rate = 5.0e-2
+learning_rate = 5.0e-3
 training_steps = 10000
 train_size = 1800
 batch_size = 400
