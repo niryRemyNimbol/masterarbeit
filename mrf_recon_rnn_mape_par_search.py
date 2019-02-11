@@ -18,14 +18,14 @@ import dic
 
 # Training Parameters
 epochs = 1000
-learning_rate = [6.0e-3, 4.0e-3]
-display_step = 20
+learning_rate = [5.0e-2, 5.0e-3, 5.0e-4]
+display_step = 50
 batch_size = 500
 
 # Network Parameters
 num_input = 64 
 timesteps = 10 # timesteps
-num_hidden = [8]
+num_hidden = [8, 16]
 num_output = 2 # number of output parameters
 
 # Fully Connected Layer Parameters
@@ -48,7 +48,7 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 #dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -61,14 +61,14 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
+series_mag = np.abs(D.T[permutation] + 0.02 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.02 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape))
 #series_phase = np.angle(D.T[permutation])
 #series = np.concatenate([series_mag.T, series_phase.T])
 #series = series.T
 
-train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc), order='F') for step in range(batches_per_epoch)]
-train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc), order='F'))
-val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc), order='F')
+train_set = [series_mag[batch_size*step:batch_size*(step+1)].reshape((batch_size, timesteps, num_in_fc)) for step in range(batches_per_epoch)]
+train_set.append(series_mag[batch_size*batches_per_epoch:train_size].reshape((train_size - batch_size*batches_per_epoch, timesteps, num_in_fc)))
+val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc))
 
 relaxation_times = dictionary.lut[:, dictionary.lut[0, :] >= dictionary.lut[1, :]][0:2].T[permutation]
 #times_max = np.max(relaxation_times, axis=0)
@@ -104,14 +104,14 @@ for nh in num_hidden:
 
 # Summaries to view in tensorboard
 #            train_loss_summary = tf.summary.scalar('training_loss', loss_op)
-#            val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
+            val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 #merged = tf.summary.merge_all()
 
 # Saver
             saver = tf.train.Saver()
 
 # Restoration directory
-            ckpt_dir = '../rnn_model_par_search/'
+            ckpt_dir = 'rnn_model/'
 
 # Start training
             with tf.Session() as sess:
@@ -120,7 +120,7 @@ for nh in num_hidden:
                 sess.run(init)
         
 #                train_loss_writer = tf.summary.FileWriter('tensorboard/training_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
-#                val_loss_writer = tf.summary.FileWriter('../tensorboard/validation_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
+                val_loss_writer = tf.summary.FileWriter('tensorboard/validation_mape_loss_lr{}_nh{}/'.format(lr, nh), sess.graph)
                 
                 
                 for epoch in range(1, epochs+1):
@@ -147,9 +147,9 @@ for nh in num_hidden:
 #        # Validation
 #        val_loss, val_loss_sum = sess.run([loss_op, val_loss_summary], feed_dict={X:batch_x, Y:batch_y})
 #        val_loss_writer.add_summary(val_loss_sum, step)
-                    val_loss = sess.run(loss_op, feed_dict={X:val_set, Y: val_times})
-#                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
-#                    val_loss_writer.add_summary(val_summary, epoch)
+#                    val_loss = sess.run(loss_op, feed_dict={X:val_set, Y: val_times})
+                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
+                    val_loss_writer.add_summary(val_summary, epoch)
             
                     if epoch % display_step == 1:
                         print("Epoch " + str(epoch) + ", average training loss= " + "{:.10f}".format(total_loss))

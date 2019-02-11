@@ -51,7 +51,7 @@ Y = tf.placeholder("float", [None, num_output])
 # Time series and corresponding T1 and T2
 #dictionary = dic.dic('recon_q_examples/dict/', 'qti', 260, 10)
 #dictionary = dic.dic('../recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
-dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf', 1000, 10)
+dictionary = dic.dic('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 D = dictionary.D[:, dictionary.lut[0, :]>=dictionary.lut[1, :]]
 #D /= np.linalg.norm(D, axis=0)
 permutation = np.random.permutation(D.shape[1])
@@ -155,8 +155,10 @@ for nh in num_hidden:
 #        val_loss_writer.add_summary(val_loss_sum, step)
 #                    val_loss = sess.run(loss_op, feed_dict={X: val_set, Y: val_times})
 #                    val_loss = sess.run(loss_ops, feed_dict={X: val_set[:, :timesteps, :], Y: val_times})
-                    
-                    
+
+
+                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
+                    val_loss_writer.add_summary(val_summary, epoch)
                     # Test validation loss for early stop
                     if epoch == 1:
                         best_loss = val_loss
@@ -168,8 +170,6 @@ for nh in num_hidden:
 #                    if counter > 50:
 #                        break
                     
-                    val_loss, val_summary = sess.run([loss_op, val_loss_summary], feed_dict={X: val_set, Y: val_times})
-                    val_loss_writer.add_summary(val_summary, epoch)
                     # Reshuffling the train set
                     permutation = np.random.permutation(D.shape[1])
                     series_mag = series_mag[permutation]
