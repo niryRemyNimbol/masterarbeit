@@ -178,35 +178,25 @@ for path in sum_dir:
 v_loss_len = np.array(v_loss_len)
 
 plt.rc('text', usetex=True)
-fig, axs = plt.subplots(5, 4, figsize=(20, 25))
-for  k in range(5):
-    if k == 0:
-        axs[k, 0].set_title(r'\textbf{T1, }'+'{}'.format(k+1)+r'\textbf{ time step}', weight='bold')
-    else:
-        axs[k, 0].set_title(r'\textbf{T1, }'+'{}'.format(k+1)+r'\textbf{ time steps}', weight='bold')
-    axs[k, 0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[k][:, 0]*1e3, c='b', marker='.', alpha=0.1)
-    axs[k, 0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
-    axs[k, 0].set_ylabel(r'Predictions (ms)')
-    axs[k, 0].set_xlabel(r'Ground truth (ms)')
-    if k == 0:
-        axs[k, 1].set_title(r'\textbf{T2, }'+'{}'.format(k+1)+r'\textbf{ time step}', weight='bold')
-    else:
-        axs[k, 1].set_title(r'\textbf{T2, }'+'{}'.format(k+1)+r'\textbf{ time steps}', weight='bold')
-    axs[k, 1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[k][:, 1]*1e3, c='r', marker='.', alpha=0.1)
-    axs[k, 1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
-    axs[k, 1].set_ylabel(r'Predictions (ms)')
-    axs[k, 1].set_xlabel(r'Ground truth (ms)')
-    axs[k, 2].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[k+5][:, 0]*1e3, c='b', marker='.', alpha=0.1)
-    axs[k, 2].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
-    axs[k, 2].set_title(r'\textbf{T1, }'+'{}'.format(k+6)+r'\textbf{ time steps}', weight='bold')
-    axs[k, 2].set_ylabel(r'Predictions (ms)')
-    axs[k, 2].set_xlabel(r'Ground truth (ms)')
-    axs[k, 3].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[k+5][:, 1]*1e3, c='r', marker='.', alpha=0.1)
-    axs[k, 3].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
-    axs[k, 3].set_title(r'\textbf{T2, }'+'{}'.format(k+6)+r'\textbf{ time steps}', weight='bold')
-    axs[k, 3].set_ylabel(r'Predictions (ms)')
-    axs[k, 3].set_xlabel(r'Ground truth (ms)')
-fig.show()
+
+def plot_simulated_len(length):
+    fig10, axs10 = plt.subplots(1, 2, figsize=(10, 5))
+    axs10[0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[length][:, 0]*1e3, c='b', marker='.', alpha=0.1)
+    axs10[0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
+    axs10[0].set_title(r'\textbf{T1, }'+'{}'.format(length+1)+r'\textbf{ time steps}', weight='bold')
+    axs10[0].set_ylabel(r'Predictions (ms)')
+    axs10[0].set_xlabel(r'Ground truth (ms)')
+    axs10[1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[length][:, 1]*1e3, c='r', marker='.', alpha=0.1)
+    axs10[1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
+    axs10[1].set_title(r'\textbf{T2, }'+'{}'.format(length+1)+r' time steps', weight='bold')
+    axs10[1].set_ylabel(r'Predictions (ms)')
+    axs10[1].set_xlabel(r'Ground truth (ms)')
+    fig10.show()
+    return fig10
+
+fig_len = []
+for k in range(len(times)):
+    fig_len.append(plot_simulated_len(k))
 
 # plot validation loss as a function of the series length
 x = [n for n in range(1, 11)]
@@ -245,15 +235,3 @@ axs4.set_xlabel(r'Epoch')
 axs4.set_ylabel(r'Validation loss')
 fig4.show()
 
-fig10, axs10 = plt.subplots(1, 2, figsize=(10, 5))
-axs10[0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[9][:, 0]*1e3, c='b', marker='.', alpha=0.1)
-axs10[0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
-axs10[0].set_title(r'\textbf{T1}', weight='bold')
-axs10[0].set_ylabel(r'Predictions (ms)')
-axs10[0].set_xlabel(r'Ground truth (ms)')
-axs10[1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[9][:, 1]*1e3, c='r', marker='.', alpha=0.1)
-axs10[1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
-axs10[1].set_title(r'\textbf{T2}', weight='bold')
-axs10[1].set_ylabel(r'Predictions (ms)')
-axs10[1].set_xlabel(r'Ground truth (ms)')
-fig10.show()

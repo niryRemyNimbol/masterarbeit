@@ -9,6 +9,8 @@ import tensorflow as tf
 #from tensorflow.contrib import rnn
 import numpy as np
 import dic
+import matplotlib.pyplot as plt
+import os
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -66,7 +68,8 @@ batches_per_epoch  = int(np.floor(train_size / batch_size))
 #series_imag = np.imag(D.T[permutation])
 #series_mag = np.abs(D.T[permutation])
 #Ten percent gaussian noise data
-series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) + 1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
+series_mag = np.abs(D.T[permutation] + 0.01 * np.max(np.real(D)) * np.random.normal(0.0, 1.0, D.T.shape) +
+                    1j * 0.01 * np.max(np.imag(D)) * np.random.normal(0.0, 1.0, D.T.shape)).T
 series_mag /= np.linalg.norm(series_mag, axis=0)
 series_mag = series_mag.T
 #series_mag_val = np.abs(D_val.T + 0.01 * np.max(np.real(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape) + 1j * 0.01 * np.max(np.imag(D_val)) * np.random.normal(0.0, 1.0, D_val.T.shape))
@@ -104,8 +107,14 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 train_ops = [optimizer.minimize(loss_op) for loss_op in loss_ops]
 
 # Evaluate model (with test logits, for dropout to be disabled)
-mse_t1 = [tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0], predictions=times_max[0]*logit[:, 0]) for logit in logits]
-mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1], predictions=times_max[1]*logit[:, 1]) for logit in logits]
+mse_t1 = [tf.losses.mean_squared_error(labels=times_max[0]*Y[:, 0],
+                                       predictions=times_max[0]*logit[:, 0]) for logit in logits]
+mse_t2 = [tf.losses.mean_squared_error(labels=times_max[1]*Y[:, 1],
+                                       predictions=times_max[1]*logit[:, 1]) for logit in logits]
+p_err_t1 = [tf.reduce_mean(tf.abs(tf.divide(tf.subtract(times_max[0]*Y[:, 0],
+                                                        times_max[0]*logit[:, 0]), times_max[0]*Y[:, 0]))) for logit in logits]
+p_err_t2 = [tf.reduce_mean(tf.abs(tf.divide(tf.subtract(times_max[1]*Y[:, 1],
+                                                        times_max[1]*logit[:, 1]), times_max[1]*Y[:, 1]))) for logit in logits]
 out = [times_max * logit for logit in logits]
 
 # Initialize the variables (i.e. assign their default value)
@@ -128,25 +137,103 @@ with tf.Session() as sess:
 # Save trained network
     ckpt_file = ckpt_dir + 'model_tr_checkpoint940.ckpt'
     saver.restore(sess, ckpt_file)
-    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2],
+    times, squared_error_t1, squared_error_t2, p_err1, p_err2 = sess.run([out, mse_t1, mse_t2, p_err_t1, p_err_t2],
                                                          feed_dict={X: test_set,
                                                                     Y: relaxation_times})
     error_t1 = [np.sqrt(squared_error_t1[k]) for k in range(len(squared_error_t1))]
     error_t2 = [np.sqrt(squared_error_t2[k]) for k in range(len(squared_error_t2))]
 
+error_t1 = np.array(error_t1)
+error_t2 = np.array(error_t2)
+p_err1 = np.array(p_err1)
+p_err2 = np.array(p_err2)
 
-#     Calculate MSE for test time series
-#    times, squared_error_t1, squared_error_t2 = sess.run([out, mse_t1, mse_t2], 
-#                                         feed_dict={X: test_set,
-#                                                    Y: relaxation_times[train_size+val_size:]})
-#    error_t1 = np.sqrt(squared_error_t1)
-#    error_t2 = np.sqrt(squared_error_t2)
+v_loss_len = []
+best_v = []
+sum_dir_len = ['../tensorboard_len/' + dir for dir in os.listdir('../tensorboard_len')]
+sum_dir_len.sort(reverse=True)
+s100 = sum_dir_len.pop()
+s1000 = sum_dir_len.pop()
+sum_dir_len.append(s100)
+sum_dir_len.sort()
+sum_dir_len.append(s1000)
+for path in sum_dir_len:
+    file_list = os.listdir(path)
+    v_loss = []
+    for e in tf.train.summary_iterator(path + '/' + file_list[0]):
+        for v in e.summary.value:
+            if v.tag.find('validation_loss') >= 0:
+                v_loss.append(v.simple_value)
+    v_loss_len.append(v_loss)
+    best_v.append(min(v_loss))
+v_loss_len = np.array(v_loss_len)
 
-#    W1 = weights['h1'].eval(sess)
-#    W2 = weights['h2'].eval(sess)
-#    Wout = weights['out'].eval(sess)
-#    
-#    b1 = biases['b1'].eval(sess)
-#    b2 = biases['b2'].eval(sess)
-#    bout = biases['out'].eval(sess)
-    
+v_loss_tr = []
+best_v_tr = []
+sum_dir_tr = ['../tensorboard_tr/' + d for d in os.listdir('../tensorboard_tr') if d.find('validation_loss_cell') >= 0]
+sum_dir_tr.sort(reverse=True)
+s1 = sum_dir_tr.pop()
+s10 = sum_dir_tr.pop()
+sum_dir_tr.append(s1)
+sum_dir_tr.sort()
+sum_dir_tr.append(s10)
+for path in sum_dir_tr:
+    file_list = os.listdir(path)
+    v_loss = []
+    for e in tf.train.summary_iterator(path + '/' + file_list[0]):
+        for v in e.summary.value:
+            if v.tag.find('validation_loss') >= 0:
+                v_loss.append(v.simple_value)
+    v_loss_tr.append(v_loss)
+    best_v_tr.append(min(v_loss))
+v_loss_tr = np.array(v_loss_tr)
+
+plt.rc('text', usetex=True)
+def plot_simulated_tr(cell):
+    fig_tr, ax_tr = plt.subplots(1, 2, figsize=(10, 5))
+    ax_tr[0].scatter(times_max[0] * relaxation_times[:, 0] * 1e3, times[cell][:, 0] * 1e3, c='b', marker='.', alpha=0.1)
+    ax_tr[0].plot([x for x in range(4000)], [x for x in range(4000)], 'g--')
+    ax_tr[1].scatter(times_max[1] * relaxation_times[:, 1] * 1e3, times[cell][:, 1] * 1e3, c='r', marker='.', alpha=0.1)
+    ax_tr[1].plot([x for x in range(600)], [x for x in range(600)], 'g--')
+    ax_tr[0].set_title(r'\textbf{T1, target repetition - time step \#}'+'{}'.format(cell+1))
+    ax_tr[0].set_xlabel(r'Ground truth (ms)')
+    ax_tr[0].set_ylabel(r'Predictions (ms)')
+    ax_tr[1].set_title(r'\textbf{T2, target repetition - time step \#}'+'{}'.format(cell+1))
+    ax_tr[1].set_xlabel(r'Ground truth (ms)')
+    ax_tr[1].set_ylabel(r'Predictions (ms)')
+    fig_tr.show()
+    return fig_tr
+figs = []
+for c in range(len(times)):
+    figs.append(plot_simulated_tr(c))
+
+x = [x for x in range(1, 11)]
+fig1, ax1 = plt.subplots(1, 1, figsize=(5, 5))
+ax1.plot(x, best_v, 'b+')
+ax1.plot(x, best_v_tr, 'r.')
+ax1.set_title(r'\textbf{Validation loss vs number time steps}')
+ax1.set_xlabel(r'Time step')
+ax1.set_ylabel(r'Best validation loss')
+ax1.legend((r'without target repetition', r'with target repetition'))
+fig1.show()
+
+fig3, axs3 = plt.subplots(1, 2, figsize=(10, 5))
+axs3[0].plot(x, p_err1 * 1e2, '.')
+axs3[0].set_title(r'\textbf{T1 percentage error vs series length}', weight='bold')
+axs3[0].set_xlabel(r'Time step')
+axs3[0].set_ylabel(r'Percentage error')
+axs3[1].plot(x, p_err2 * 1e2, '.')
+axs3[1].set_title(r'\textbf{T2 percentage error vs series length}', weight='bold')
+axs3[1].set_xlabel(r'Time step')
+axs3[1].set_ylabel(r'Percentage error')
+fig3.show()
+fig5, axs5 = plt.subplots(1, 2, figsize=(10, 5))
+axs5[0].plot(x, error_t1 * 1e3, '.')
+axs5[0].set_title(r'\textbf{T1 RMSE vs series length}', weight='bold')
+axs5[0].set_xlabel(r'Time step')
+axs5[0].set_ylabel(r'RMSE (ms)')
+axs5[1].plot(x, error_t2 * 1e3, '.')
+axs5[1].set_title(r'\textbf{T2 RMSE vs series length}', weight='bold')
+axs5[1].set_xlabel(r'Time step')
+axs5[1].set_ylabel(r'RMSE (ms)')
+fig5.show()
