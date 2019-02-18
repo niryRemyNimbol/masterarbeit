@@ -152,7 +152,7 @@ v_loss_len = np.array(v_loss_noise)
 plt.rc('text', usetex=True)
 x2 = [n for n in range(1, 1001)]
 fig4, axs4 = plt.subplots(1, 1, figsize=(5, 5))
-axs4.plot(x2, v_loss_len.T)
+axs4.plot(x2, v_loss_len.T, ':')
 axs4.set_xlabel(r'Epoch')
 axs4.set_ylabel(r'Validation loss')
 axs4.legend(('1\%', '2\%', '5\%', '10\%'))

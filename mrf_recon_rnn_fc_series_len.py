@@ -188,7 +188,7 @@ def plot_simulated_len(length):
     axs10[0].set_xlabel(r'Ground truth (ms)')
     axs10[1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[length][:, 1]*1e3, c='r', marker='.', alpha=0.1)
     axs10[1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
-    axs10[1].set_title(r'\textbf{T2, }'+'{}'.format(length+1)+r' time steps', weight='bold')
+    axs10[1].set_title(r'\textbf{T2, }'+'{}'.format(length+1)+r'\textbf{ time steps}', weight='bold')
     axs10[1].set_ylabel(r'Predictions (ms)')
     axs10[1].set_xlabel(r'Ground truth (ms)')
     fig10.show()

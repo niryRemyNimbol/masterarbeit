@@ -149,7 +149,6 @@ axs4.set_xlabel(r'Epoch')
 axs4.set_ylabel(r'Validation loss')
 axs4.legend(('Full', '0.5', '0.25'))
 fig4.show()
-fig5, axs5 = plt.subplots(1, 2, figsize=(10, 5))
 
 #x = [err for err in errors_t1[1]]
 #fig5, axs5 = plt.subplots(1, 2, figsize=(10, 5))

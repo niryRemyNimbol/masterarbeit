@@ -17,10 +17,10 @@ def read_mrf_data(data_path, Nreps, dim):
 
     return data_mag
 
-data_path = '../recon_q_examples/data/Exam52004/Series5/recon_data'
-mask_path = '../recon_q_examples/data/Exam52004/Series5/mask.dat'
-map_path = '../recon_q_examples/data/Exam52004/Series5/qmaps.dat'
-dl_path = '../recon_q_examples/data/Exam52004/Series5/dl_qmaps.dat'
+data_path = '../recon_q_examples/data/Exam52006/Series5/recon_data'
+mask_path = '../recon_q_examples/data/Exam52006/Series5/mask.dat'
+map_path = '../recon_q_examples/data/Exam52006/Series5/qmaps.dat'
+dl_path = '../recon_q_examples/data/Exam52006/Series5/dl_qmaps.dat'
 #data_path = '../recon_q_examples/data/recon_data'
 mrf = read_mrf_data(data_path, 1000, 256)
 series = mrf.reshape((1000, 256**2))
@@ -168,18 +168,18 @@ for k, l in angles:
 def plot_brain_results_len(length):
     figlen, axlen = plt.subplots(2, 3, figsize=(15, 10))
     t1_len = axlen[0, 0].imshow(mask * imgs[length][:, :, 0] * 1e3, cmap='hot', origin='lower', vmin=0, vmax=3000)
-    t1_err = axlen[0, 1].imshow(
-        (np.abs(mask * imgs[length][:, :, 0] * 1e3 - img_gt[:, :, 0]) / (img_gt[:, :, 0] + 1e-6)) * 1e2,
-        cmap='hot', origin='lower', vmin=0, vmax=100)
 #    t1_err = axlen[0, 1].imshow(
-#        (np.abs(mask * imgs[length][:, :, 0] - map[-1:-257:-1, :, 0]) / (map[-1:-257:-1, :, 0] + 1e-6)) * 1e2,
-#        cmap='hot', origin='lower', vmin=0, vmax=100)
-    scdm = axlen[0, 2].scatter(img_gt[:, :, 0], mask[:, :] * imgs[length][:, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
-    scnet = axlen[0, 2].scatter(img_gt[:, :, 0], mask[:, :] * dl_map[:, :, 0].T * 1e3, c='r', marker='.', alpha=0.1)
-#    scdm = axlen[0, 2].scatter(map[-1: -257:-1, :, 0] * 1e3, mask * imgs[length][:, :, 0] * 1e3, c='r', marker='.',
-#                               alpha=0.1)
-#    scnet = axlen[0, 2].scatter(mask * dl_map[:, :, 0].T * 1e3, mask * imgs[length][:, :, 0] * 1e3, c='b', marker='.',
-#                                alpha=0.1)
+#        (np.abs(mask * imgs[length][:, :, 0] * 1e3 - img_gt[:, :, 0]) / (img_gt[:, :, 0] + 1e-6)) * 1e2,
+#        cmap='plasma', origin='lower', vmin=0, vmax=100)
+    t1_err = axlen[0, 1].imshow(
+        (np.abs(mask * imgs[length][:, :, 0] - map[-1:-257:-1, :, 0]) / (map[-1:-257:-1, :, 0] + 1e-6)) * 1e2,
+        cmap='plasma', origin='lower', vmin=0, vmax=100)
+#    scdm = axlen[0, 2].scatter(img_gt[:, :, 0], mask[:, :] * imgs[length][:, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
+#    scnet = axlen[0, 2].scatter(img_gt[:, :, 0], mask[:, :] * dl_map[:, :, 0].T * 1e3, c='r', marker='.', alpha=0.1)
+    scdm = axlen[0, 2].scatter(map[-1: -257:-1, :, 0] * 1e3, mask * imgs[length][:, :, 0] * 1e3, c='r', marker='.',
+                               alpha=0.1)
+    scnet = axlen[0, 2].scatter(mask * dl_map[:, :, 0].T * 1e3, mask * imgs[length][:, :, 0] * 1e3, c='b', marker='.',
+                                alpha=0.1)
     axlen[0, 2].plot([x for x in range(4000)], [x for x in range(4000)], 'g--')
     axlen[0, 0].set_axis_off()
     axlen[0, 1].set_axis_off()
@@ -190,23 +190,23 @@ def plot_brain_results_len(length):
     axlen[0, 2].set_title('{}'.format(length + 1) + r'\textbf{ time step LSTM, T1 scatter plot}')
     axlen[0, 2].set_xlabel(r'Dictionary matching / MRF net (ms)')
     axlen[0, 2].set_ylabel(r'LSTM predictions (ms)')
-#    axlen[0, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
-    axlen[0, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
+    axlen[0, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
+#    axlen[0, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
     axlen[0, 2].set_xbound(lower=0, upper=4000)
     axlen[0, 2].set_ybound(lower=0, upper=4000)
     t2_len = axlen[1, 0].imshow(mask * imgs[length][:, :, 1] * 1e3, cmap='copper', origin='lower', vmin=0, vmax=300)
-    t2_err = axlen[1, 1].imshow(
-        (np.abs(mask * imgs[length][:, :, 1] * 1e3 - img_gt[:, :, 1]) / (img_gt[:, :, 1] + 1e-6)) * 1e2,
-        cmap='copper', origin='lower', vmin=0, vmax=100)
 #    t2_err = axlen[1, 1].imshow(
-#        (np.abs(mask * imgs[length][:, :, 1] - map[-1:-257:-1, :, 1]) / (map[-1:-257:-1, :, 1] + 1e-6)) * 1e2,
-#        cmap='copper', origin='lower', vmin=0, vmax=100)
-    scdm = axlen[1, 2].scatter(img_gt[:, :, 1], mask[:, :] * imgs[length][:, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
-    scnet = axlen[1, 2].scatter(img_gt[:, :, 1], mask[:, :] * dl_map[:, :, 1].T * 1e3, c='r', marker='.', alpha=0.1)
-#    scdm = axlen[1, 2].scatter(map[-1: -257:-1, :, 1] * 1e3, mask * imgs[length][:, :, 1] * 1e3, c='r', marker='.',
-#                               alpha=0.1)
-#    scnet = axlen[1, 2].scatter(mask * dl_map[:, :, 1].T * 1e3, mask * imgs[length][:, :, 1] * 1e3, c='b', marker='.',
-#                                alpha=0.1)
+#        (np.abs(mask * imgs[length][:, :, 1] * 1e3 - img_gt[:, :, 1]) / (img_gt[:, :, 1] + 1e-6)) * 1e2,
+#        cmap='viridis', origin='lower', vmin=0, vmax=100)
+    t2_err = axlen[1, 1].imshow(
+        (np.abs(mask * imgs[length][:, :, 1] - map[-1:-257:-1, :, 1]) / (map[-1:-257:-1, :, 1] + 1e-6)) * 1e2,
+        cmap='viridis', origin='lower', vmin=0, vmax=100)
+#    scdm = axlen[1, 2].scatter(img_gt[:, :, 1], mask[:, :] * imgs[length][:, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
+#    scnet = axlen[1, 2].scatter(img_gt[:, :, 1], mask[:, :] * dl_map[:, :, 1].T * 1e3, c='r', marker='.', alpha=0.1)
+    scdm = axlen[1, 2].scatter(map[-1: -257:-1, :, 1] * 1e3, mask * imgs[length][:, :, 1] * 1e3, c='r', marker='.',
+                               alpha=0.1)
+    scnet = axlen[1, 2].scatter(mask * dl_map[:, :, 1].T * 1e3, mask * imgs[length][:, :, 1] * 1e3, c='b', marker='.',
+                                alpha=0.1)
     axlen[1, 2].plot([x for x in range(600)], [x for x in range(600)], 'g--')
     axlen[1, 0].set_axis_off()
     axlen[1, 1].set_axis_off()
@@ -217,8 +217,8 @@ def plot_brain_results_len(length):
     axlen[1, 2].set_title('{}'.format(length + 1) + r'\textbf{ time step LSTM, T2 scatter plot}')
     axlen[1, 2].set_xlabel(r'Dictionary matching / MRF net (ms)')
     axlen[1, 2].set_ylabel(r'LSTM predictions (ms)')
-#    axlen[1, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
-    axlen[1, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
+    axlen[1, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
+#    axlen[1, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
     axlen[1, 2].set_xbound(lower=0, upper=600)
     axlen[1, 2].set_ybound(lower=0, upper=600)
     figlen.show()

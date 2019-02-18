@@ -93,41 +93,41 @@ imgs = [time.reshape((256,256,2), order='C') for time in times]
 #fig.colorbar(t2, ax=axs[1])
 plt.rc('text', usetex=True)
 
-#label = 1
-#aprev = 10
-#true_t1 = np.array([604, 596,1448, 1262, 444, 754, 903, 1276, 1034, 745, 1160, 966])
+label = 1
+aprev = 10
+true_t1 = np.array([604, 596,1448, 1262, 444, 754, 903, 1276, 1034, 745, 1160, 966])
 #true_t1_std = 0.03 * true_t1
-#true_t2 = np.array([95, 136, 390, 184, 154, 116, 137, 204, 167, 157, 214, 224])
+true_t2 = np.array([95, 136, 390, 184, 154, 116, 137, 204, 167, 157, 214, 224])
 #true_t2_std = 0.03 * true_t2
 #data_t1 = []
 #data_t1_std = []
 #data_t2 = []
 #data_t2_std = []
-#img_gt = np.zeros_like(map)
-#angles = [(k,l) for k in range(0,221,2) for l in range(0,221,2)]
-#for k, l in angles:
-#    if mask[k:k + 36, l].sum() == 0 and mask[k:k + 36, l + 35].sum() == 0 and mask[k, l:l + 36].sum() == 0 and mask[k + 35, l:l + 36].sum() == 0 and mask[k:k + 36, l:l + 36].sum() > 0:
-#        a = np.mean(mask[k:k + 36, l:l + 36] * imgs[9][k:k + 36, l:l + 36, 1], axis=(0, 1))
-#        if np.abs(a - aprev) > 1e-4:
+img_gt = np.zeros_like(map)
+angles = [(k,l) for k in range(0,221,2) for l in range(0,221,2)]
+for k, l in angles:
+    if mask[k:k + 36, l].sum() == 0 and mask[k:k + 36, l + 35].sum() == 0 and mask[k, l:l + 36].sum() == 0 and mask[k + 35, l:l + 36].sum() == 0 and mask[k:k + 36, l:l + 36].sum() > 0:
+        a = np.mean(mask[k:k + 36, l:l + 36] * imgs[9][k:k + 36, l:l + 36, 1], axis=(0, 1))
+        if np.abs(a - aprev) > 1e-4:
             #            axs[m, n].imshow(mask[k:k + 36, l:l + 36] * imgs[k:k + 36, l:l + 36, 0], cmap='hot', origin='lower', vmin=0,
             #                             vmax=3.0)
 #            y_t1_std = []
-#            y_t1_mean = []
+            y_t1_mean = []
 #            y_t2_std = []
-#            y_t2_mean = []
-#            for n in range(len(imgs)):
+            y_t2_mean = []
+            for n in range(len(imgs)):
                 #                axs[0, n].annotate('{}'.format(label), (l, k), color='y')
                 #                axs[0, n].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
                 #                axs[0, n].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
                 #                axs[2, n].annotate('{}'.format(label), (l, k), color='r')
                 #                axs[2, n].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
                 #                axs[2, n].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
-#                tube_t1 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 0] * 1e3
-#                tube_t2 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 1] * 1e3
+                tube_t1 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 0] * 1e3
+                tube_t2 = mask[k:k+36, l:l+36] * imgs[n][k:k+36, l:l+36, 1] * 1e3
 #                y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
-#                y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
+                y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
 #                y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
-#                y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
+                y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
             #                print(np.mean(tube_t2[tube_t2 > 0].flatten()), n, true_t2[label-1])
             #            axs[0, 10].annotate('{}'.format(label), (l, k), color='y')
             #            axs[0, 10].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
@@ -135,33 +135,33 @@ plt.rc('text', usetex=True)
             #            axs[2, 10].annotate('{}'.format(label), (l, k), color='r')
             #            axs[2, 10].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
             #            axs[2, 10].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
-#            tube_t1 = map[-k:-k-36:-1, l:l+36, 0] * 1e3
-#            tube_t2 = map[-k:-k-36:-1, l:l+36, 1] * 1e3
+            tube_t1 = map[-k:-k-36:-1, l:l+36, 0] * 1e3
+            tube_t2 = map[-k:-k-36:-1, l:l+36, 1] * 1e3
 #            y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
-#            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
+            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
 #            y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
-#            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
-#            ind = np.where(tube_t1 > 0)
-#            offset = [k * np.ones_like(ind[0]), l * np.ones_like(ind[1])]
-#            img_gt[ind[0] + offset[0], ind[1] + offset[1], :] = np.array([true_t1[label-1], true_t2[label-1]])
+            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
+            ind = np.where(tube_t1 > 0)
+            offset = [k * np.ones_like(ind[0]), l * np.ones_like(ind[1])]
+            img_gt[ind[0] + offset[0], ind[1] + offset[1], :] = np.array([true_t1[label-1], true_t2[label-1]])
             #            axs[0, 11].annotate('{}'.format(label), (l, k), color='y')
             #            axs[0, 11].vlines([l, l+36], k, k+36, colors='y', label='{}'.format(label))
             #            axs[0, 11].hlines([k, k+36], l, l+36, colors='y', label='{}'.format(label))
             #            axs[2, 11].annotate('{}'.format(label), (l, k), color='r')
             #            axs[2, 11].vlines([l, l+36], k, k+36, colors='r', label='{}'.format(label))
             #            axs[2, 11].hlines([k, k+36], l, l+36, colors='r', label='{}'.format(label))
-#            tube_t1 = mask[k:k+36, l:l+36] * dl_map[:, :, 0].T[k:k+36, l:l+36] * 1e3
-#            tube_t2 = mask[k:k+36, l:l+36] * dl_map[:, :, 1].T[k:k+36, l:l+36] * 1e3
+            tube_t1 = mask[k:k+36, l:l+36] * dl_map[:, :, 0].T[k:k+36, l:l+36] * 1e3
+            tube_t2 = mask[k:k+36, l:l+36] * dl_map[:, :, 1].T[k:k+36, l:l+36] * 1e3
 #            y_t1_std.append(np.std(tube_t1[tube_t1 > 0].flatten()))
-#            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
+            y_t1_mean.append(np.mean(tube_t1[tube_t1 > 0].flatten()))
 #            y_t2_std.append(np.std(tube_t2[tube_t2 > 0].flatten()))
-#            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
-#            aprev = a
+            y_t2_mean.append(np.mean(tube_t2[tube_t2 > 0].flatten()))
+            aprev = a
             #            data_t1.append(y_t1_mean)
             #            data_t1_std.append(y_t1_std)
             #            data_t2.append(y_t2_mean)
             #            data_t2_std.append(y_t2_std)
-#            label += 1
+            label += 1
 #data_t1 = np.array(data_t1)
 #data_t2 = np.array(data_t2)
 #data_t1_std = np.array(data_t1_std)
@@ -172,10 +172,10 @@ def plot_brain_results_len(length):
     t1_len = axlen[0, 0].imshow(mask * imgs[length][:, :, 0] * 1e3, cmap='hot', origin='lower', vmin=0, vmax=3000)
 #    t1_err = axlen[0, 1].imshow(
 #        (np.abs(mask * imgs[length][:, :, 0] * 1e3 - img_gt[:, :, 0]) / (img_gt[:, :, 0] + 1e-6)) * 1e2,
-#        cmap='hot', origin='lower', vmin=0, vmax=100)
+#        cmap='plasma', origin='lower', vmin=0, vmax=100)
     t1_err = axlen[0, 1].imshow(
         (np.abs(mask * imgs[length][:, :, 0] - map[-1:-257:-1, :, 0]) / (map[-1:-257:-1, :, 0] + 1e-6)) * 1e2,
-        cmap='hot', origin='lower', vmin=0, vmax=100)
+        cmap='plasma', origin='lower', vmin=0, vmax=100)
 #    scdm = axlen[0, 2].scatter(img_gt[:, :, 0], mask[:, :] * imgs[length][:, :, 0] * 1e3, c='b', marker='.', alpha=0.1)
 #    scnet = axlen[0, 2].scatter(img_gt[:, :, 0], mask[:, :] * dl_map[:, :, 0].T * 1e3, c='r', marker='.', alpha=0.1)
     scdm = axlen[0, 2].scatter(map[-1: -257:-1, :, 0] * 1e3, mask * imgs[length][:, :, 0] * 1e3, c='r', marker='.',
@@ -191,18 +191,18 @@ def plot_brain_results_len(length):
     axlen[0, 1].set_title(r'\textbf{T1 percentage error, time step \#}' + '{}'.format(length + 1))
     axlen[0, 2].set_title(r'\textbf{T1 scatter plot, time step \#}' + '{}'.format(length + 1))
     axlen[0, 2].set_xlabel(r'Dictionary matching / MRF net (ms)')
-    axlen[0, 2].set_ylabel(r'LSTM predictions (ms)')
-    #    axlen[0, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
+    axlen[0, 2].set_ylabel(r'LSTM / MRF net predictions (ms)')
+    axlen[0, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
     axlen[0, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
     axlen[0, 2].set_xbound(lower=0, upper=4000)
     axlen[0, 2].set_ybound(lower=0, upper=4000)
     t2_len = axlen[1, 0].imshow(mask * imgs[length][:, :, 1] * 1e3, cmap='copper', origin='lower', vmin=0, vmax=300)
 #    t2_err = axlen[1, 1].imshow(
 #        (np.abs(mask * imgs[length][:, :, 1] * 1e3 - img_gt[:, :, 1]) / (img_gt[:, :, 1] + 1e-6)) * 1e2,
-#        cmap='copper', origin='lower', vmin=0, vmax=100)
+#        cmap='viridis', origin='lower', vmin=0, vmax=100)
     t2_err = axlen[1, 1].imshow(
         (np.abs(mask * imgs[length][:, :, 1] - map[-1:-257:-1, :, 1]) / (map[-1:-257:-1, :, 1] + 1e-6)) * 1e2,
-        cmap='copper', origin='lower', vmin=0, vmax=100)
+        cmap='viridis', origin='lower', vmin=0, vmax=100)
 #    scdm = axlen[1, 2].scatter(img_gt[:, :, 1], mask[:, :] * imgs[length][:, :, 1] * 1e3, c='b', marker='.', alpha=0.1)
 #    scnet = axlen[1, 2].scatter(img_gt[:, :, 1], mask[:, :] * dl_map[:, :, 1].T * 1e3, c='r', marker='.', alpha=0.1)
     scdm = axlen[1, 2].scatter(map[-1: -257:-1, :, 1] * 1e3, mask * imgs[length][:, :, 1] * 1e3, c='r', marker='.',
@@ -219,8 +219,8 @@ def plot_brain_results_len(length):
     axlen[1, 2].set_title(r'\textbf{T2 scatter plot, time step \#}' + '{}'.format(length + 1))
     axlen[1, 2].set_xlabel(r'Dictionary matching / MRF net (ms)')
     axlen[1, 2].set_ylabel(r'LSTM predictions (ms)')
-    #    axlen[1, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
-    axlen[1, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
+    axlen[1, 2].legend((scdm, scnet), (r'DM', r'MRF net'))
+#    axlen[1, 2].legend((scdm, scnet), (r'LSTM', r'MRF net'))
     axlen[1, 2].set_xbound(lower=0, upper=600)
     axlen[1, 2].set_ybound(lower=0, upper=600)
     figlen.show()
