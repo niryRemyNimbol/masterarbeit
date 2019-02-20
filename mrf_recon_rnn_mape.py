@@ -10,6 +10,7 @@ import tensorflow as tf
 import numpy as np
 import dic
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score as r2
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -132,11 +133,15 @@ plt.rc('text', usetex=True)
 fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 axs[0].scatter(relaxation_times[:, 0]*1e3, times[:, 0]*1e3, c='b', marker='.', alpha=0.1)
 axs[0].plot(relaxation_times[:, 0]*1e3, relaxation_times[:, 0]*1e3, 'g--')
+r2_t1 = r2(relaxation_times[:, 0] * 1e3, times[:, 0] * 1e3)
+axs[0].text(1, 3550, r'R2 = {:5f}'.format(r2_t1))
 axs[0].set_title(r'\textbf{T1}', weight='bold')
 axs[0].set_ylabel(r'Predictions (ms)')
 axs[0].set_xlabel(r'Ground truth (ms)')
 axs[1].scatter(relaxation_times[:, 1]*1e3, times[:, 1]*1e3, c='r', marker='.', alpha=0.1)
 axs[1].plot(relaxation_times[:, 1]*1e3, relaxation_times[:, 1]*1e3, 'g--')
+r2_t2 = r2(relaxation_times[:, 1] * 1e3, times[:, 1] * 1e3)
+axs[1].text(1, 550, r'R2 = {:5f}'.format(r2_t2))
 axs[1].set_title(r'\textbf{T2}', weight='bold')
 axs[1].set_ylabel('Predictions (ms)')
 axs[1].set_xlabel('Ground truth (ms)')

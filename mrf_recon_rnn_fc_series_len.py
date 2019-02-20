@@ -11,6 +11,7 @@ import numpy as np
 import dic
 import os
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score as r2
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -183,11 +184,15 @@ def plot_simulated_len(length):
     fig10, axs10 = plt.subplots(1, 2, figsize=(10, 5))
     axs10[0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[length][:, 0]*1e3, c='b', marker='.', alpha=0.1)
     axs10[0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
+    r2_t1 = r2(times_max[0]*relaxation_times[:, 0] * 1e3, times[length][:, 0] * 1e3)
+    axs10[0].text(1, 3550, r'R2 = {:5f}'.format(r2_t1))
     axs10[0].set_title(r'\textbf{T1, }'+'{}'.format(length+1)+r'\textbf{ time steps}', weight='bold')
     axs10[0].set_ylabel(r'Predictions (ms)')
     axs10[0].set_xlabel(r'Ground truth (ms)')
     axs10[1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[length][:, 1]*1e3, c='r', marker='.', alpha=0.1)
     axs10[1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
+    r2_t2 = r2(times_max[1]*relaxation_times[:, 1] * 1e3, times[length][:, 1] * 1e3)
+    axs10[1].text(1, 550, r'R2 = {:5f}'.format(r2_t2))
     axs10[1].set_title(r'\textbf{T2, }'+'{}'.format(length+1)+r'\textbf{ time steps}', weight='bold')
     axs10[1].set_ylabel(r'Predictions (ms)')
     axs10[1].set_xlabel(r'Ground truth (ms)')
@@ -205,6 +210,7 @@ axs2.plot(x, best_v, '.')
 axs2.set_title(r'\textbf{Validatiton loss vs series length}', weight='bold')
 axs2.set_xlabel(r'Number time steps')
 axs2.set_ylabel(r'Best validation loss')
+axs2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 fig2.show()
 
 fig3, axs3 = plt.subplots(1, 2, figsize=(10, 5))
@@ -234,4 +240,21 @@ axs4.plot(x2, v_loss_len.T)
 axs4.set_xlabel(r'Epoch')
 axs4.set_ylabel(r'Validation loss')
 fig4.show()
+
+fig_sig, axs_sig = plt.subplots(1, 2, figsize=(10, 5))
+axs_sig[0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[9][:, 0]*1e3, c='b', marker='.', alpha=0.1)
+axs_sig[0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
+r2_t1 = r2(times_max[0]*relaxation_times[:, 0] * 1e3, times[9][:, 0] * 1e3)
+axs_sig[0].text(1, 3550, r'R2 = {:5f}'.format(r2_t1))
+axs_sig[0].set_title(r'\textbf{T1}', weight='bold')
+axs_sig[0].set_ylabel(r'Predictions (ms)')
+axs_sig[0].set_xlabel(r'Ground truth (ms)')
+axs_sig[1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[9][:, 1]*1e3, c='r', marker='.', alpha=0.1)
+axs_sig[1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
+r2_t2 = r2(times_max[1]*relaxation_times[:, 1] * 1e3, times[9][:, 1] * 1e3)
+axs_sig[1].text(1, 550, r'R2 = {:5f}'.format(r2_t2))
+axs_sig[1].set_title(r'\textbf{T2}', weight='bold')
+axs_sig[1].set_ylabel(r'Predictions (ms)')
+axs_sig[1].set_xlabel(r'Ground truth (ms)')
+fig_sig.show()
 

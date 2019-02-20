@@ -11,6 +11,7 @@ import numpy as np
 import dic
 import matplotlib.pyplot as plt
 import os
+from sklearn.metrics import r2_score as r2
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -192,8 +193,12 @@ plt.rc('text', usetex=True)
 def plot_simulated_tr(cell):
     fig_tr, ax_tr = plt.subplots(1, 2, figsize=(10, 5))
     ax_tr[0].scatter(times_max[0] * relaxation_times[:, 0] * 1e3, times[cell][:, 0] * 1e3, c='b', marker='.', alpha=0.1)
+    r2_t1 = r2(times_max[0]*relaxation_times[:, 0] * 1e3, times[cell][:, 0] * 1e3)
+    ax_tr[0].text(1, 3550, r'R2 = {:5f}'.format(r2_t1))
     ax_tr[0].plot([x for x in range(4000)], [x for x in range(4000)], 'g--')
     ax_tr[1].scatter(times_max[1] * relaxation_times[:, 1] * 1e3, times[cell][:, 1] * 1e3, c='r', marker='.', alpha=0.1)
+    r2_t2 = r2(times_max[1]*relaxation_times[:, 1] * 1e3, times[cell][:, 1] * 1e3)
+    ax_tr[1].text(1, 550, r'R2 = {:5f}'.format(r2_t2))
     ax_tr[1].plot([x for x in range(600)], [x for x in range(600)], 'g--')
     ax_tr[0].set_title(r'\textbf{T1, target repetition - time step \#}'+'{}'.format(cell+1))
     ax_tr[0].set_xlabel(r'Ground truth (ms)')
@@ -214,6 +219,7 @@ ax1.plot(x, best_v_tr, 'r.')
 ax1.set_title(r'\textbf{Validation loss vs number time steps}')
 ax1.set_xlabel(r'Time step')
 ax1.set_ylabel(r'Best validation loss')
+ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 ax1.legend((r'without target repetition', r'with target repetition'))
 fig1.show()
 

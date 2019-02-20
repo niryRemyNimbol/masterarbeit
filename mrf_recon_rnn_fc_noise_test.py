@@ -11,6 +11,7 @@ import numpy as np
 import dic
 import os
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score as r2
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -176,11 +177,15 @@ def scatter_plot_noise(level):
     for k in range(4):
         axs10[k, 0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, times[level][noise_levels[k]][:, 0]*1e3, c='b', marker='.', alpha=0.1)
         axs10[k, 0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
+        r2_t1 = r2(times_max[0]*relaxation_times[:, 0] * 1e3, times[level][noise_levels[k]][:, 0] * 1e3)
+        axs10[k, 0].text(1, 3550, r'R2 = {:5f}'.format(r2_t1))
         axs10[k, 0].set_title(r'\textbf{T1, }' + '{}'.format(noise_levels[k]) + r'\textbf{\% noise}', weight='bold')
         axs10[k, 0].set_ylabel(r'Predictions (ms)')
         axs10[k, 0].set_xlabel(r'Ground truth (ms)')
         axs10[k, 1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, times[level][noise_levels[k]][:, 1]*1e3, c='r', marker='.', alpha=0.1)
         axs10[k, 1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
+        r2_t2 = r2(times_max[1]*relaxation_times[:, 1] * 1e3, times[level][noise_levels[k]][:, 1] * 1e3)
+        axs10[k, 1].text(1, 550, r'R2 = {:5f}'.format(r2_t2))
         axs10[k, 1].set_title(r'\textbf{T2, }' + '{}'.format(noise_levels[k]) + r'\textbf{\% noise}', weight='bold')
         axs10[k, 1].set_ylabel(r'Predictions (ms)')
         axs10[k, 1].set_xlabel(r'Ground truth (ms)')

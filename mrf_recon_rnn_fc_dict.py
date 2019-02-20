@@ -93,7 +93,7 @@ for n in range(len(dict_)):
         val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in_fc))
 
         relaxation_times = lut[:, lut[0, :] >= lut[1, :]][0:2].T[permutation]
-        times_max = np.max(relaxation_times, axis=0)
+        times_max = np.array([4.0, 0.6])
         relaxation_times /= times_max
         train_times = [relaxation_times[batch_size*step:batch_size*(step+1)] for step in range(batches_per_epoch)]
         train_times.append(relaxation_times[batch_size*batches_per_epoch:train_size])

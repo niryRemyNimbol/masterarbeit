@@ -11,6 +11,7 @@ import numpy as np
 import dic
 import os
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score as r2
 
 ## Parallelism configurations
 #config = tf.ConfigProto()
@@ -81,8 +82,8 @@ errors_t1 = {}
 errors_t2 = {}
 
 # Restoration directory
-ckpt_dir = '../rnn_model_dict/'
-ckpt_epoch = [970, 870, 950]
+ckpt_dir = '../rnn_model_dict_new/'
+ckpt_epoch = [960, 900, 900]
 ckpt_list = [ckpt_dir + 'model_fc_density_t1{}_t2{}_checkpoint{}.ckpt'.format(density[m], density[m], ckpt_epoch[m]) for m in range(len(density))]
 
 # Start training
@@ -124,7 +125,7 @@ for m in range(len(ckpt_list)):
             errors_t1[density[m]], \
             errors_t2[density[m]] = sess.run([out, mse_t1, mse_t2], feed_dict={X:series_test.reshape(D.shape[1], timesteps, num_in_fc), Y:relaxation_times})
 
-sum_dir = ['../tensorboard_dict/validation_loss_density_t1{}_t2{}'.format(d, d) for d in density]
+sum_dir = ['../tensorboard_dict_new/validation_loss_density_t1{}_t2{}'.format(d, d) for d in density]
 
 v_loss_noise = []
 best_val_loss = []
@@ -168,11 +169,15 @@ def scatter_plot_dict():
         t = times[density[k]]
         axs10[k, 0].scatter(times_max[0]*relaxation_times[:, 0]*1e3, t[:, 0]*1e3, c='b', marker='.', alpha=0.1)
         axs10[k, 0].plot(times_max[0]*relaxation_times[:, 0]*1e3, times_max[0]*relaxation_times[:, 0]*1e3, 'g--')
+        r2_t1 = r2(times_max[0]*relaxation_times[:, 0] * 1e3, t[:, 0] * 1e3)
+        axs10[k, 0].text(1, 3550, r'R2 = {:5f}'.format(r2_t1))
         axs10[k, 0].set_title(r'\textbf{T1, }' + '1/{}'.format(density[k]) + r'\textbf{ density}', weight='bold')
         axs10[k, 0].set_ylabel(r'Predictions (ms)')
         axs10[k, 0].set_xlabel(r'Ground truth (ms)')
         axs10[k, 1].scatter(times_max[1]*relaxation_times[:, 1]*1e3, t[:, 1]*1e3, c='r', marker='.', alpha=0.1)
         axs10[k, 1].plot(times_max[1]*relaxation_times[:, 1]*1e3, times_max[1]*relaxation_times[:, 1]*1e3, 'g--')
+        r2_t2 = r2(times_max[1]*relaxation_times[:, 1] * 1e3, t[:, 1] * 1e3)
+        axs10[k, 1].text(1, 550, r'R2 = {:5f}'.format(r2_t2))
         axs10[k, 1].set_title(r'\textbf{T2, }' + '1/{}'.format(density[k]) + r'\textbf{ density}', weight='bold')
         axs10[k, 1].set_ylabel(r'Predictions (ms)')
         axs10[k, 1].set_xlabel(r'Ground truth (ms)')
