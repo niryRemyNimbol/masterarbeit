@@ -18,10 +18,10 @@ def read_mrf_data(data_path, Nreps, dim):
 
     return data_mag
 
-data_path = '../recon_q_examples/data/Exam52004/Series5/recon_data'
-mask_path = '../recon_q_examples/data/Exam52004/Series5/mask.dat'
-map_path = '../recon_q_examples/data/Exam52004/Series5/qmaps.dat'
-dl_path = '../recon_q_examples/data/Exam52004/Series5/dl_qmaps.dat'
+data_path = '../recon_q_examples/data/Exam52006/Series5/recon_data'
+mask_path = '../recon_q_examples/data/Exam52006/Series5/mask.dat'
+map_path = '../recon_q_examples/data/Exam52006/Series5/qmaps.dat'
+dl_path = '../recon_q_examples/data/Exam52006/Series5/dl_qmaps.dat'
 #data_path = '../recon_q_examples/data/recon_data'
 mrf = read_mrf_data(data_path, 1000, 256)
 series = mrf.reshape((1000, 256**2))
@@ -35,7 +35,7 @@ dl_map = np.reshape(np.fromfile(dl_id, np.float32), [256,256,2],order='F')
 #series /= np.amax(series, axis=0)
 #series = series[0:400, :]
 times_max = np.array([4., .6])
-phantom = 1
+phantom = 0
 
 # Network Parameters
 num_input = 64
@@ -237,13 +237,17 @@ def plot_brain_results_len(length):
     axlen_t2[2].set_ybound(lower=0, upper=600)
     figlen_t1.show()
     figlen_t2.show()
-    return figlen_t1, figlen_t2
+    return figlen_t1, figlen_t2, r2_t1, r2_t2
 
 #fig, axs = plt.subplots(12, 4, figsize=(14, 42))
 
 figs = []
+r2_t1_list = []
+r2_t2_list = []
 for k in range(len(imgs)):
     figs.append(plot_brain_results_len(k))
+    r2_t1_list.append(figs[k][2])
+    r2_t2_list.append(figs[k][3])
 #    t1_pred = axs[k, 0].imshow(mask * imgs[k][:, :, 0] * 1e3, cmap='hot', origin='lower', vmin=0, vmax=3000)
 #    axs[k, 0].set_title('{}'.format(k+1)+r'\textbf{ time step LSTM, T1 (ms)}', weight='bold')
 #    axs[k, 0].set_axis_off()
@@ -415,3 +419,13 @@ else:
     ax_dm_t2.set_title(r'\textbf{T2 (ms)}')
 fig_dm_t1.show()
 fig_dm_t2.show()
+
+x = [n for n in range(1, 11)]
+fig_r2, ax_r2 = plt.subplots(1, 1, figsize=(5, 5))
+ax_r2.plot(x, r2_t1_list, 'b.')
+ax_r2.plot(x, r2_t2_list, 'r.')
+ax_r2.set_title(r'\textbf{R squared score vs series length')
+ax_r2.set_xlabel(r'Number of time steps')
+ax_r2.set_ylabel(r'R2 score')
+ax_r2.legend((r'T1', r'T2'))
+fig_r2.show()

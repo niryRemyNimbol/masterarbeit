@@ -207,12 +207,25 @@ def plot_simulated_tr(cell):
     ax_tr[1].set_xlabel(r'Ground truth (ms)')
     ax_tr[1].set_ylabel(r'Predictions (ms)')
     fig_tr.show()
-    return fig_tr
+    return fig_tr, r2_t1, r2_t2
 figs = []
+r2_t1_list = []
+r2_t2_list = []
 for c in range(len(times)):
     figs.append(plot_simulated_tr(c))
+    r2_t1_list.append(figs[c][1])
+    r2_t2_list.append(figs[c][2])
 
 x = [x for x in range(1, 11)]
+fig_r2, ax_r2 = plt.subplots(1, 1, figsize=(5, 5))
+ax_r2.plot(x, r2_t1_list, 'b.')
+ax_r2.plot(x, r2_t2_list, 'r.')
+ax_r2.set_title(r'\textbf{R squared score vs series length')
+ax_r2.set_xlabel(r'Number of time steps')
+ax_r2.set_ylabel(r'R2 score')
+ax_r2.legend((r'T1', r'T2'))
+fig_r2.show()
+
 fig1, ax1 = plt.subplots(1, 1, figsize=(5, 5))
 ax1.plot(x, best_v, 'b+')
 ax1.plot(x, best_v_tr, 'r.')

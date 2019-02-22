@@ -197,14 +197,27 @@ def plot_simulated_len(length):
     axs10[1].set_ylabel(r'Predictions (ms)')
     axs10[1].set_xlabel(r'Ground truth (ms)')
     fig10.show()
-    return fig10
+    return fig10, r2_t1, r2_t2
 
 fig_len = []
+r2_t1_list = []
+r2_t2_list = []
 for k in range(len(times)):
     fig_len.append(plot_simulated_len(k))
+    r2_t1_list.append(fig_len[k][1])
+    r2_t2_list.append(fig_len[k][2])
+
+x = [n for n in range(1, 11)]
+fig_r2, ax_r2 = plt.subplots(1, 1, figsize=(5, 5))
+ax_r2.plot(x, r2_t1_list, 'b.')
+ax_r2.plot(x, r2_t2_list, 'r.')
+ax_r2.set_title(r'\textbf{R squared score vs series length')
+ax_r2.set_xlabel(r'Number of time steps')
+ax_r2.set_ylabel(r'R2 score')
+ax_r2.legend((r'T1', r'T2'))
+fig_r2.show()
 
 # plot validation loss as a function of the series length
-x = [n for n in range(1, 11)]
 fig2, axs2 = plt.subplots(1, 1, figsize=(5, 5))
 axs2.plot(x, best_v, '.')
 axs2.set_title(r'\textbf{Validatiton loss vs series length}', weight='bold')
