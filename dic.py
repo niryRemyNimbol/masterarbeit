@@ -105,7 +105,7 @@ def format_data(D, lut, timesteps, num_in, noise_level=2):
     series_mag /= np.linalg.norm(series_mag, axis=0)
     series_mag = series_mag.T
 
-    train_set = series_mag[:train_size+val_size].reshape((train_size, timesteps, num_in))
+    train_set = series_mag[:train_size].reshape((train_size, timesteps, num_in))
     val_set = series_mag[train_size:train_size+val_size].reshape((val_size, timesteps, num_in))
 
     relaxation_times = lut[:, lut[0, :] >= lut[1, :]][0:2].T[permutation]
