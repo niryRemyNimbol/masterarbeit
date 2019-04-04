@@ -156,7 +156,7 @@ def train_lstm(X, Y, net, epochs, batch_size, save_step, loss_function, learning
                 batch_data = data_batches[k]
                 batch_target = target_batches[k]
 
-                batch_loss = train_lstm_batch(X, Y, net, session, train_op, loss_op, batch_data, batch_target)
+                batch_loss = train_lstm_batch(X, Y, session, train_op, loss_op, batch_data, batch_target)
                 if tr:
                     total_loss += batch_loss[-1]
                 else:
