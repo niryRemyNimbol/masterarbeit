@@ -193,6 +193,7 @@ def save_lstm(saver, session, val_loss, epoch, best_loss=None, counter=0):
     elif val_loss < best_loss:
         saver.save(session, ckpt_file)
         prev_save = epoch - 10 * (counter + 1)
+        prev_save += prev_save==1
         prev_ckpt = ckpt_dir + 'lstm_model_checkpoint{}.ckpt'.format(prev_save)
         os.remove(prev_ckpt + '.index')
         os.remove(prev_ckpt + '.meta')
