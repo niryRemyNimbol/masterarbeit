@@ -7,6 +7,7 @@ Created on Mon Oct  1 11:58:29 2018
 """
 import tensorflow as tf
 import dic
+import os
 
 def RNN(x, timesteps, num_hidden, num_output):
 
@@ -177,9 +178,10 @@ def train_lstm(X, Y, net, epochs, batch_size, save_step, loss_function, learning
 
             if epoch == 1:
                 best_loss, counter = save_lstm(saver, session, val_loss, epoch)
+                display_loss(total_loss, val_loss, epoch)
             elif epoch % save_step == 0:
                 best_loss, counter = save_lstm(saver, session, val_loss, epoch, best_loss=best_loss, counter=counter)
-            display_loss(total_loss, val_loss, epoch)
+                display_loss(total_loss, val_loss, epoch)
     print('Optimisation finished! Best validation loss: {}, epoch: {}'.format(best_loss, epoch - 10 * (counter + 1)))
 
 def save_lstm(saver, session, val_loss, epoch, best_loss=None, counter=0):
