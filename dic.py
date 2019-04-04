@@ -95,7 +95,7 @@ def load_dict(dict_path, method_name, Nreps, Tv):
     return D, lut
 
 def format_data(D, lut, timesteps, num_in, noise_level=2):
-    D = D[lut[0, :] >= lut[1, :]]
+    D = D[:, lut[0, :] >= lut[1, :]]
 
     train_size = int(np.floor(D.shape[1]*0.8))
     val_size = D.shape[1]-train_size
