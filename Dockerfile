@@ -22,7 +22,8 @@ COPY rnn_functions.py /RNN_niry/rnn_functions.py
 #COPY mrf_recon_rnn_fc_series_len_init.py /RNN_niry/mrf_recon_rnn_fc_series_len_init.py
 #COPY mrf_recon_rnn_mape_init.py /RNN_niry/mrf_recon_rnn_mape_init.py
 #COPY mrf_recon_rnn_fc_noise.py /RNN_niry/mrf_recon_rnn_fc_noise.py
-COPY mrf_recon_rnn_fc_dict.py /RNN_niry/mrf_recon_rnn_fc_dict.py
+#COPY mrf_recon_rnn_fc_dict.py /RNN_niry/mrf_recon_rnn_fc_dict.py
+COPY mrf_lstm_train.py /RNN_niry/mrf_lstm_train.py
 COPY dic.py /RNN_niry/dic.py
 
 WORKDIR "/RNN_niry"
@@ -40,4 +41,5 @@ EXPOSE 6006
 #CMD exec python mrf_recon_rnn_fc_series_len_init.py
 #CMD exec python mrf_recon_rnn_mape_init.py
 #CMD exec python mrf_recon_rnn_fc_noise.py
-CMD exec python mrf_recon_rnn_fc_dict.py
+#CMD exec python mrf_recon_rnn_fc_dict.py
+CMD exec python mrf_lstm_train.py
