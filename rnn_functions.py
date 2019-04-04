@@ -130,11 +130,11 @@ def train_lstm(X, Y, net, epochs, batch_size, save_step, loss_function, learning
 
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
     if tr:
-        loss_op = [loss_function(target, net_) for net_ in net]
+        loss_op = [loss_function(Y, net_) for net_ in net]
         train_op = [optimizer.minimize(op) for op in loss_op]
         val_loss_summary = [tf.summary.scalar('validation_loss', op) for op in loss_op]
     else:
-        loss_op = loss_function(target, net)
+        loss_op = loss_function(Y, net)
         train_op = optimizer.minimize(loss_op)
         val_loss_summary = tf.summary.scalar('validation_loss', loss_op)
 
