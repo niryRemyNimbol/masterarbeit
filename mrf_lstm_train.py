@@ -14,7 +14,7 @@ num_hidden = 8
 num_output = 2
 num_fc = 64
 
-dictionary, relaxation_times = dic.load_data('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
+dictionary, relaxation_times = dic.load_dict('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
 train_set, train_times, val_set, val_times, times_max = dic.format_data(dictionary, relaxation_times, timesteps, num_input)
 
 X = tf.placeholder("float", [None, timesteps, num_fc])
