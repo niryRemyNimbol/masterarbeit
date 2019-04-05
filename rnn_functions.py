@@ -171,7 +171,7 @@ def train_lstm(X, Y, net, epochs, batch_size, save_step, loss_function, learning
                 for n in range(len(val_loss_writer)):
                     val_loss_writer[n].add_summary(val_loss_summ, epoch)
             else:
-                val_loss_writer.add_summary(val_loss_summ, epoch)
+                val_loss_writer.add_summary(val_loss_summ[n], epoch)
 
             data, target = dic.shuffle(data, target)
             data_batches, target_batches = dic.build_batches(data, target, batch_size)
