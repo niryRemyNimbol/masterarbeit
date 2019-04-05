@@ -5,7 +5,7 @@ import numpy as np
 
 epochs = 1000
 batch_size = 500
-learning_rate = 1e-1
+learning_rate = 2e-1
 save_step = 10
 
 timesteps = 10
