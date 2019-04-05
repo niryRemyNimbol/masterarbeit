@@ -20,5 +20,5 @@ train_set, train_times, val_set, val_times, times_max = dic.format_data(dictiona
 X = tf.placeholder("float", [None, timesteps, num_input])
 Y = tf.placeholder("float", [None, num_output])
 
-net = rnn_functions.LSTM(X, timesteps, num_hidden, num_output, fc=True, num_input=num_fc)
-rnn_functions.train_lstm(X, Y, net, epochs, batch_size, save_step, tf.losses.mean_squared_error, learning_rate, train_set, train_times, val_set, val_times)
+net = rnn_functions.LSTM(X, timesteps, num_hidden, num_output, fc=True, tr=True, num_input=num_fc)
+rnn_functions.train_lstm(X, Y, net, epochs, batch_size, save_step, tf.losses.mean_squared_error, learning_rate, train_set, train_times, val_set, val_times, tr=True)
