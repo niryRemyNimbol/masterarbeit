@@ -5,6 +5,7 @@ Created on Wed Jun 27 09:45:38 2018
 
 @author: niry
 """
+import numpy as np
 
 def load_dict(dict_path, method_name, Nreps, Tv):
     # dictionary data file paths
