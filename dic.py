@@ -134,3 +134,20 @@ def shuffle(data, target):
     data = data[permutation]
     target = target[permutation]
     return data, target
+
+def read_mrf_data(data_path, Nreps, dim):
+    data_mag_path = data_path + '_mag.dat'
+    # open the data files
+    data_id = open(data_mag_path, 'rb')
+    data_mag = np.reshape(np.fromfile(data_id, np.float32), [Nreps, dim, dim])
+    data_mag = data_mag.reshape((Nreps, dim*dim))
+    data_mag /= np.linalg.norm(data_mag, axis=0)
+    return data_mag
+
+def load_relaxation_times_map(data_path, dim, method=0):
+    id = open(data_path, 'rb')
+    data = np.fromfile(id, np.float32)
+    if method == 2:
+        return np.reshape(data, [dim, dim])
+    else:
+        return np.reshape(data, [dim, dim, 2], order='F')

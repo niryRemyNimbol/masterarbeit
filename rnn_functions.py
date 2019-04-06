@@ -202,8 +202,12 @@ def save_lstm(saver, session, val_loss, epoch, best_loss=None, counter=0):
         best_loss = val_loss
     else:
         counter += 1
-
     return best_loss, counter
+
+def load_lstm(saver, session, epoch, suffix=''):
+    ckpt_dir = '../rnn_model' + suffix + '/'
+    ckpt_file = ckpt_dir + 'lstm_model_checkpoint{}.ckpt'.format(epoch)
+    saver.restore(session, ckpt_file)
 
 def display_loss(total_loss, val_loss, epoch):
     print("Epoch " + str(epoch) + ", Training Loss= " + "{:.10f}".format(total_loss))
