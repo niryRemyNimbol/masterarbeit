@@ -15,7 +15,7 @@ num_output = 2
 num_fc = 64
 
 dictionary, relaxation_times = dic.load_dict('recon_q_examples/dict/', 'fisp_mrf_const_tr', 1000, 10)
-train_set, train_times, val_set, val_times, times_max = dic.format_data(dictionary, relaxation_times, timesteps, num_input, noise_level=1)
+train_set, train_times, val_set, val_times, times_max = dic.format_data(dictionary, relaxation_times, timesteps, num_input, noise_level=3)
 
 X = tf.placeholder("float", [None, timesteps, num_input])
 Y = tf.placeholder("float", [None, num_output])
