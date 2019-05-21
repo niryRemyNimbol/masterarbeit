@@ -10,7 +10,7 @@ import dic
 import os
 
 
-def LSTM(x, timesteps, num_hidden, num_out, activation=tf.sigmoid, fc=False, tr=False, num_input=64):
+def LSTM(x, timesteps, num_hidden, num_out, activation=tf.sigmoid, fc=False, tr=False, out_step=1, num_input=64):
 
     x = tf.unstack(x, timesteps, 1)
 
@@ -22,9 +22,12 @@ def LSTM(x, timesteps, num_hidden, num_out, activation=tf.sigmoid, fc=False, tr=
     outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
 
     if tr:
-        return [tf.layers.dense(output, num_out, activation=activation, kernel_regularizer=tf.norm, reuse=tf.AUTO_REUSE) for output in outputs]
+        return [tf.layers.dense(output, num_out, activation=activation, kernel_regularizer=tf.norm, reuse=tf.AUTO_REUSE) for output in outputs[out_step-1::out_step]]
     else:
         return tf.layers.dense(outputs[-1], num_out, activation=activation, kernel_regularizer=tf.norm, reuse=tf.AUTO_REUSE)
+
+def mape_loss(target, pred):
+    return tf.reduce_mean(tf.abs(tf.divide(tf.subtract(target, pred), target))) # mean averaged percentage error
 
 def train_lstm_batch(X, Y, session, train_op, loss_op, batch_data, batch_target):
     train, loss = session.run([train_op, loss_op], feed_dict={X: batch_data, Y:batch_target})
